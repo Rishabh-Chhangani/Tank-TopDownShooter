@@ -10,12 +10,17 @@ public class TankController : MonoBehaviour
 
     private void Awake()
     {
+       
+
         if (tankMovement == null)
             tankMovement = GetComponent<TankMovement>();
+
         if (aimTurret == null)
             aimTurret = GetComponentInChildren<AimTurret>();
+
         if (weapon == null || weapon.Length == 0)
             weapon = GetComponentsInChildren<WeaponTurret>();
+
     }
 
     public void HandleTankMovement(Vector2 movementVector)
@@ -36,6 +41,7 @@ public class TankController : MonoBehaviour
 
     public void HandleShoot()
     {
+        Debug.Log($"Weapon Lenght : {weapon.Length}");
         foreach (var w in weapon)
         {
             w.Fire();

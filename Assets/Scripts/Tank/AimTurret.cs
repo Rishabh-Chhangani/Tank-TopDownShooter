@@ -14,6 +14,9 @@ public class AimTurret: MonoBehaviour
 
     [SerializeField] private float turretRotationSpeed = 800f;
 
+    [SerializeField]
+    private float visualOffset = -90f;
+
     
 
     private void Awake()
@@ -35,7 +38,7 @@ public class AimTurret: MonoBehaviour
         Vector2 direction = targetWorldPosition - (Vector2)tankTurretParent.position;
 
         float desiredAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg; 
-        float localAngle = desiredAngle - tankTurretParent.parent.eulerAngles.z ;
+        float localAngle = desiredAngle - tankTurretParent.parent.eulerAngles.z - visualOffset;
         Quaternion targetRotation = Quaternion.Euler(0f, 0f, localAngle);
         float maxRotationThisFrame = turretRotationSpeed * Time.deltaTime;
 

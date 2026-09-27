@@ -69,7 +69,7 @@ public class WeaponTurret : MonoBehaviour
     public void Fire()
     {
 
-        
+       
         if (canShoot)
         {
            
@@ -96,6 +96,7 @@ public class WeaponTurret : MonoBehaviour
             }
             
             OnShoot?.Invoke();
+
             OnReloading?.Invoke(currentDelay);
         }
         else
@@ -105,21 +106,28 @@ public class WeaponTurret : MonoBehaviour
 
     }
 
-    public void Update()
+    private void Update()
     {
+       
         Reload();
     }
 
     private void Reload()
     {
-
-        if(canShoot == false)
+        if (!canShoot)
         {
             currentDelay -= Time.deltaTime;
-            OnReloading?.Invoke(currentDelay/ turretData.reloadDelay);
-            if(currentDelay <= 0)
+
+            Debug.Log($"Reloading: {currentDelay}");
+
+            OnReloading?.Invoke(currentDelay / turretData.reloadDelay);
+
+            if (currentDelay <= 0)
             {
+                currentDelay = 0;
                 canShoot = true;
+
+                Debug.Log("RELOAD COMPLETE - canShoot = TRUE");
             }
         }
     }
