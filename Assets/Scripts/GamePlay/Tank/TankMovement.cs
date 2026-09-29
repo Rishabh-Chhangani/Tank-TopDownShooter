@@ -8,6 +8,10 @@ using UnityEngine;
 public class TankMovement : MonoBehaviour
 {
     private Rigidbody2D rb;
+    [SerializeField]
+    private Vector2 min;
+    [SerializeField]
+    private Vector2 max;
 
     private Vector2 movementVector;
     public TankMovementData movementData;
@@ -64,11 +68,28 @@ public class TankMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-
-
         UpdateSpeed(movementVector);
         RotateTank(movementVector);
-        rb.velocity = (Vector2)transform.up * currentSpeed * currentDriveDirection;
+        Vector2 velocity = (Vector2)transform.up * currentSpeed * currentDriveDirection;
+        velocity = ClampTankMovemnt(velocity);
 
+        rb.velocity = velocity;
     }
+
+
+    public Vector2 ClampTankMovemnt(Vector2 velocity)
+    {
+        
+
+        var nextposition = rb.position + velocity * Time.fixedDeltaTime;
+        nextposition.x = Mathf.Clamp(nextposition.x, min.x, max.x);
+        nextposition.y = Mathf.Clamp(nextposition.y, min.y, max.y);
+        Vector2 allowedVelocity = (nextposition - rb.position) / Time.fixedDeltaTime;
+        return allowedVelocity;
+    }
+
+
+
+
+
 }
