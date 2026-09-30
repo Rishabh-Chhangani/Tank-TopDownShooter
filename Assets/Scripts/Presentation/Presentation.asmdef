@@ -1,7 +1,9 @@
 {
     "name": "Presentation",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:dcd89bfbef0d02a40a1e419d0215e37c"
+    ],
     "includePlatforms": [
         "Editor",
         "WindowsStandalone64"

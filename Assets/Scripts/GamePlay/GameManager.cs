@@ -49,7 +49,7 @@ public class GameManager : MonoBehaviour
     public void SaveData()
     {
         if (player != null)
-            saveSystem.SaveData(SceneManager.GetActiveScene().buildIndex + 1,player.GetComponentInChildren<Damagable>().CurrentHealth);
+            saveSystem.SaveData(SceneManager.GetActiveScene().buildIndex + 1, player.GetComponentInChildren<Damagable>().CurrentHealth);
 
     }
 }

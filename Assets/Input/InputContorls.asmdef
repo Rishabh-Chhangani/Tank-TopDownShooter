@@ -1,15 +1,10 @@
 {
-    "name": "Gameplay",
+    "name": "InputContorls",
     "rootNamespace": "",
     "references": [
-        "GUID:9efeb92eccbfb554ea6eab3308c3b42e",
-        "GUID:75469ad4d38634e559750d17036d5f7c",
-        "GUID:4b84427fd7ace4b4cb623ef8a46124ed"
+        "GUID:75469ad4d38634e559750d17036d5f7c"
     ],
-    "includePlatforms": [
-        "Editor",
-        "WindowsStandalone64"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
