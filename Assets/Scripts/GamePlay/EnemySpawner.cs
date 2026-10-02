@@ -1,42 +1,71 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    
-    
-    private List<SpawnPoint> _spawnPoints;
+    [SerializeField] private List<SpawnPoint> _allSpawnPoints;
+    [SerializeField] private List<SpawnPoint> _availableSpawnPoints;
+    [SerializeField] private GameObject enemyPrefab;
 
-    [SerializeField]
-    private GameObject enemyPrefab;
-    
-
+    private Transform enemyParent;
 
     private void Awake()
     {
-         _spawnPoints = new List<SpawnPoint>(FindObjectsOfType<SpawnPoint>());
+        _allSpawnPoints = new List<SpawnPoint>(
+            FindObjectsOfType<SpawnPoint>()
+        );
+
+        _availableSpawnPoints = new List<SpawnPoint>(_allSpawnPoints);
     }
 
-    public void Spawn()
+    private void Start()
     {
-        if(_spawnPoints.Count == 0)
+        GameObject enemyParentObject = GameObject.Find("Enemies");
+
+        if (enemyParentObject != null)
         {
-            Debug.LogWarning("No Spawn points have been found check scene");
-            return;
+            enemyParent = enemyParentObject.transform;
+        }
+        else
+        {
+            Debug.LogWarning("Enemy Parent not found in scene");
+        }
+    }
+
+    public GameObject Spawn()
+    {
+        if (_availableSpawnPoints.Count == 0)
+        {
+            Debug.LogWarning(
+                "No available Spawn points have been found. Check scene."
+            );
+
+            return null;
         }
 
-        int index = Random.Range(0, _spawnPoints.Count);
-        SpawnPoint spawnPoint = _spawnPoints[index];
+        int index = Random.Range(0, _availableSpawnPoints.Count);
 
-        Instantiate(
+        SpawnPoint spawnPoint = _availableSpawnPoints[index];
+
+        GameObject enemy = Instantiate(
             enemyPrefab,
             spawnPoint.transform.position,
             spawnPoint.transform.rotation
-            );
+        );
 
+        if (enemyParent != null)
+        {
+            enemy.transform.SetParent(enemyParent);
+        }
         
+        _availableSpawnPoints.RemoveAt(index);
 
+        return enemy;
     }
 
+
+    public void ResetSpawnPoints()
+    {
+        _availableSpawnPoints = new List<SpawnPoint>(_allSpawnPoints);
+    }
 }

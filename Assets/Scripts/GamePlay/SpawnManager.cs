@@ -1,43 +1,58 @@
+using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class SpawnManager : MonoBehaviour
 {
-    private EnemySpawner enemySpawner;
+    [SerializeField] private EnemySpawner enemySpawner;
+    [SerializeField] private float timeBetweenSpawn = 0.4f;
+    [SerializeField] private int numberOfEnemiesToSpawn = 5;
 
-    private float spawnRate = 0.4f;
-    private int numberOfEnemiesToSpawn = 0;
+    public event Action OnEnemyDestroyed;
 
-    private void Awake()
+    public int GetNumberOfEnemiesToSpawn()
     {
-        enemySpawner = GetComponent<EnemySpawner>();
-        if(enemySpawner == null)
+        return numberOfEnemiesToSpawn;
+    }
+
+    public IEnumerator ManageSpawn()
+    {
+        for (int i = 0; i < numberOfEnemiesToSpawn; i++)
         {
-            Debug.Log("EnmeySpawner refernce not set");
+            GameObject enemy = enemySpawner.Spawn();
+
+            if (enemy != null)
+            {
+                Damagable damagable = enemy.GetComponentInChildren<Damagable>();
+
+                if (damagable != null)
+                {
+                    damagable.OnDeath += HandleEnemyDeath;
+
+                    Debug.Log("Death event registered.");
+                }
+                else
+                {
+                    Debug.LogError(
+                        "Damagable component was not found on spawned enemy."
+                    );
+                }
+            }
+
+            yield return new WaitForSeconds(timeBetweenSpawn);
         }
     }
 
-    private void Start()
+    private void HandleEnemyDeath()
     {
-        ManageSpawn();
+        Debug.Log("SpawnManager received enemy death.");
+
+        OnEnemyDestroyed?.Invoke();
     }
 
-    public void ManageSpawn()
+    public void ResetEnemySpawnPoints()
+
     {
-        StartCoroutine(WaitCoroutine());
-    }
-
-    
-
-
-    IEnumerator WaitCoroutine()
-    {
-        while (numberOfEnemiesToSpawn <= 5)
-        {
-            enemySpawner.Spawn();
-            yield return new WaitForSeconds(spawnRate);
-            numberOfEnemiesToSpawn++;
-        }
+        enemySpawner.ResetSpawnPoints();
     }
 }

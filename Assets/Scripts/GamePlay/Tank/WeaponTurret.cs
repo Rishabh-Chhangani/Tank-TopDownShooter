@@ -7,7 +7,7 @@ using UnityEngine;
 [RequireComponent(typeof(ObjectPool))]
 public class WeaponTurret : MonoBehaviour
 {
-    
+
     private TankController tankController;
 
 
@@ -29,20 +29,20 @@ public class WeaponTurret : MonoBehaviour
     public event Action OnShoot, OnCanShoot;
     public event Action<float> OnReloading;
 
-    
+
 
     private void Awake()
     {
 
         tankColliders = GetComponentsInParent<Collider2D>();
-        
+
         aimTurret = GetComponentInParent<AimTurret>();
         bulletPool = GetComponent<ObjectPool>();
 
 
         tankController = GetComponentInParent<TankController>();
 
-        if(tankController == null)
+        if (tankController == null)
         {
             Debug.LogError("TankController is not found in parent.");
             enabled = false;
@@ -64,28 +64,28 @@ public class WeaponTurret : MonoBehaviour
     }
 
 
-  
+
 
     public void Fire()
     {
 
-       
+
         if (canShoot)
         {
-           
+
             canShoot = false;
             currentDelay = turretData.reloadDelay;
 
             foreach (var barrel in turretBarrels)
             {
-                Debug.Log("BARREL COUNT: " + turretBarrels.Count);
+
 
                 GameObject bullet = bulletPool.CreateObject();
 
-                Debug.Log("FIRING BARREL: " + barrel.name);
+
 
                 bullet.transform.position = barrel.position;
-                bullet.transform.rotation = barrel.rotation;                
+                bullet.transform.rotation = barrel.rotation;
 
                 bullet.GetComponent<Bullet>().Initialize();
 
@@ -94,7 +94,7 @@ public class WeaponTurret : MonoBehaviour
                     Physics2D.IgnoreCollision(bullet.GetComponent<Collider2D>(), colllider);
                 }
             }
-            
+
             OnShoot?.Invoke();
 
             OnReloading?.Invoke(currentDelay);
@@ -108,7 +108,7 @@ public class WeaponTurret : MonoBehaviour
 
     private void Update()
     {
-       
+
         Reload();
     }
 
@@ -118,7 +118,7 @@ public class WeaponTurret : MonoBehaviour
         {
             currentDelay -= Time.deltaTime;
 
-            Debug.Log($"Reloading: {currentDelay}");
+
 
             OnReloading?.Invoke(currentDelay / turretData.reloadDelay);
 
@@ -127,7 +127,7 @@ public class WeaponTurret : MonoBehaviour
                 currentDelay = 0;
                 canShoot = true;
 
-                Debug.Log("RELOAD COMPLETE - canShoot = TRUE");
+
             }
         }
     }

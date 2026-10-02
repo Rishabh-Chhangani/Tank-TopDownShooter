@@ -1,30 +1,28 @@
 ﻿using System;
-using Unity.PlasticSCM.Editor.WebApi;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Damagable : MonoBehaviour
 {
     [SerializeField] private int currentHealth = 0;
+
     public int maxHealth = 100;
+
     private Transform rootEntity;
-    
+    private bool isDead = false;
 
     public event Action OnDeath;
     public event Action OnDamaged;
     public event Action<float> OnHealthChanged;
 
-
     private void Awake()
     {
-        if(currentHealth == 0)
+        if (currentHealth == 0)
+        {
             currentHealth = maxHealth;
+        }
 
         rootEntity = transform.root;
-
-      
     }
-
 
     public int CurrentHealth
     {
@@ -32,38 +30,57 @@ public class Damagable : MonoBehaviour
         {
             return currentHealth;
         }
+
         set
         {
             currentHealth = value;
-            currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-            OnHealthChanged?.Invoke((float)currentHealth / maxHealth);
+
+            currentHealth = Mathf.Clamp(
+                currentHealth,
+                0,
+                maxHealth
+            );
+
+            OnHealthChanged?.Invoke(
+                (float)currentHealth / maxHealth
+            );
         }
     }
 
     public void TakeDamage(int damagePoints)
     {
-        CurrentHealth -= damagePoints;
-        if(currentHealth <= 0)
+        if (isDead)
         {
-       
+            return;
+        }
+
+        CurrentHealth -= damagePoints;
+
+        if (currentHealth <= 0)
+        {
             Die();
         }
         else
         {
             OnDamaged?.Invoke();
-          
 
             Debug.Log(currentHealth);
-
         }
     }
 
     public void Die()
     {
+        if (isDead)
+        {
+            return;
+        }
+
+        isDead = true;
+
         Debug.Log("Damagable.Die() CALLED");
 
         OnDeath?.Invoke();
-        Destroy(rootEntity.gameObject);
 
-    }   
+        Destroy(rootEntity.gameObject);
+    }
 }
