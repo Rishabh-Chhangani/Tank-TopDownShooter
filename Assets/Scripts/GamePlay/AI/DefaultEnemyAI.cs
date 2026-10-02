@@ -1,40 +1,82 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class DefaultEnemyAI : MonoBehaviour
 {
-
-    //This is an base for or Strategy Pattern for AI, we can have different behaviours for different AI types, and we can switch between them based on the situation.
-
+    [Header("AI Behaviours")]
+    [SerializeField]
+    private AIBehaviour shootBehaviour;
 
     [SerializeField]
-    private AIBehaviour shootBehaviour, patrolBehaviour;
+    private AIBehaviour chaseBehaviour;
 
+    [SerializeField]
+    private AIBehaviour patrolBehaviour;
 
-    //TankContoller Equivalent- combination of Movement, Weapon, Look, Input others will be added as need 
+    [Header("References")]
     [SerializeField]
     private TankController tank;
-   
+
     [SerializeField]
     private AIDetector aiDetector;
 
     private void Awake()
     {
-        aiDetector = GetComponentInChildren<AIDetector>();
-        tank = GetComponentInChildren<TankController>();   
+        if (aiDetector == null)
+        {
+            aiDetector =
+                GetComponentInChildren<AIDetector>();
+        }
+
+        if (tank == null)
+        {
+            tank =
+                GetComponentInChildren<TankController>();
+        }
     }
 
     private void Update()
     {
-        if(aiDetector.TargetVisible)
+        if (tank == null ||
+            aiDetector == null)
         {
-            shootBehaviour.PerformAction(tank, aiDetector);
+            return;
         }
-        else
+
+        // No target detected.
+        // Perform the enemy's normal behaviour.
+        if (aiDetector.Target == null)
         {
-            patrolBehaviour.PerformAction(tank, aiDetector);
+            if (patrolBehaviour != null)
+            {
+                patrolBehaviour.PerformAction(
+                    tank,
+                    aiDetector);
+            }
+
+            return;
+        }
+
+        // Target detected.
+        // Always chase the target.
+        if (chaseBehaviour != null)
+        {
+            chaseBehaviour.PerformAction(
+                tank,
+                aiDetector);
+        }
+
+        // Shooting is independent of chasing.
+        // The enemy can move and shoot at the same time.
+        if (aiDetector.IsTargetInShootingRange(
+                tank.transform) &&
+            aiDetector.TargetVisible)
+        {
+            if (shootBehaviour != null)
+            {
+                shootBehaviour.PerformAction(
+                    tank,
+                    aiDetector);
+            }
         }
     }
 }

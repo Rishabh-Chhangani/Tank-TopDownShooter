@@ -168,6 +168,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3191135473193572945, guid: 20d1faf06d8d8aa4d9cc6a313168f1c7, type: 3}
+      propertyPath: chaseBehaviour
+      value: 
+      objectReference: {fileID: 8692281058829721814}
+    - target: {fileID: 3191135473193572945, guid: 20d1faf06d8d8aa4d9cc6a313168f1c7, type: 3}
       propertyPath: patrolBehaviour
       value: 
       objectReference: {fileID: 1923544000}
@@ -177,11 +181,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3191135473193572948, guid: 20d1faf06d8d8aa4d9cc6a313168f1c7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -14.47
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3191135473193572948, guid: 20d1faf06d8d8aa4d9cc6a313168f1c7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.94
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3191135473193572948, guid: 20d1faf06d8d8aa4d9cc6a313168f1c7, type: 3}
       propertyPath: m_LocalPosition.z
@@ -217,7 +221,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3191135473193572949, guid: 20d1faf06d8d8aa4d9cc6a313168f1c7, type: 3}
       propertyPath: m_Name
-      value: Patroling Enemy
+      value: Enemy 2
       objectReference: {fileID: 0}
     - target: {fileID: 5101568755671591961, guid: 20d1faf06d8d8aa4d9cc6a313168f1c7, type: 3}
       propertyPath: m_RootOrder
@@ -261,3 +265,16 @@ MonoBehaviour:
   waitTime: 0.5
   isWaiting: 0
   currentPatrolTarget: {x: 0, y: 0}
+--- !u!114 &8692281058829721814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7320477275602486827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd7780ab507cf9d4d80eaf5e8d2fe887, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rotationThreshold: 0.98
