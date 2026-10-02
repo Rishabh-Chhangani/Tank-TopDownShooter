@@ -11,7 +11,7 @@ public class AIDetector : MonoBehaviour
 
     // Not serialized: target must come only from runtime detection,
     // never from a reference assigned in the Inspector / prefab.
-    private Transform target;
+    private Transform target;   
 
     [SerializeField] private LayerMask playerLayerMask;
 

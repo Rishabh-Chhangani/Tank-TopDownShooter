@@ -68,7 +68,7 @@ public class TankMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Debug.Log(
+        Debug.Log(  
         $"Tank FixedUpdate | " +
         $"Transform: {transform.position} | " +
         $"Rigidbody: {rb.position} | " +
