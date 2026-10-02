@@ -9,10 +9,14 @@ public class AIChaseBehaviour : AIBehaviour
         TankController tank,
         AIDetector aiDetector)
     {
-        if (tank == null ||
-            aiDetector == null ||
-            aiDetector.Target == null)
+        // FIX 1: If tank, detector, or target is missing, explicitly stop the tank 
+        // instead of leaving the last movement input active!
+        if (tank == null || aiDetector == null || aiDetector.Target == null)
         {
+            if (tank != null)
+            {
+                tank.HandleTankMovement(Vector2.zero);
+            }
             return;
         }
 
@@ -28,28 +32,25 @@ public class AIChaseBehaviour : AIBehaviour
 
         directionToTarget.Normalize();
 
-        Vector2 tankForward =
-            tank.tankMovement.transform.up;
+        Vector2 tankForward = -tank.tankMovement.transform.up;
 
         float dotProduct =
             Vector2.Dot(
                 tankForward,
                 directionToTarget);
 
-        // Tank is facing approximately toward the player.
         if (dotProduct >= rotationThreshold)
         {
             tank.HandleTankMovement(Vector2.up);
             return;
         }
 
-        // Determine which side the player is on.
         float crossProduct =
             tankForward.x * directionToTarget.y -
             tankForward.y * directionToTarget.x;
 
-        int rotationResult =
-            crossProduct > 0f ? 1 : -1;
+        // FIX 2: Corrected the typo (-crossProduct3f -> -crossProduct * 3f)
+        float rotationResult = Mathf.Clamp(-crossProduct * 3f, -1f, 1f);
 
         tank.HandleTankMovement(
             new Vector2(

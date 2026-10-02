@@ -4,28 +4,23 @@ using UnityEngine;
 public class AIDetector : MonoBehaviour
 {
     [Header("Detection")]
-    [Range(1f, 15f)]
-    [SerializeField]
-    private float viewRadius = 11f;
+    [Range(1f, 15f)] [SerializeField] private float viewRadius = 11f;
 
     [SerializeField]
     private float detectionCheckDelay = 0.1f;
 
-    [SerializeField]
+    // Not serialized: target must come only from runtime detection,
+    // never from a reference assigned in the Inspector / prefab.
     private Transform target;
 
-    [SerializeField]
-    private LayerMask playerLayerMask;
+    [SerializeField] private LayerMask playerLayerMask;
 
-    [SerializeField]
-    private LayerMask visibilityLayer;
+    [SerializeField] private LayerMask visibilityLayer;
 
     [Header("Shooting")]
-    [SerializeField]
-    private float shootingRange = 6f;
+    [SerializeField] private float shootingRange = 6f;
 
-    [field: SerializeField]
-    public bool TargetVisible { get; private set; }
+    [field: SerializeField] public bool TargetVisible { get; private set; }
 
     public Transform Target
     {
@@ -118,6 +113,18 @@ public class AIDetector : MonoBehaviour
 
         if (collision != null)
         {
+            float distance = Vector2.Distance(
+                transform.position,
+                collision.transform.position);
+
+            Debug.Log(
+                $"DETECTION | Detector: {transform.position} | " +
+                $"Collider: {collision.name} | " +
+                $"Collider Position: {collision.transform.position} | " +
+                $"Distance: {distance} | " +
+                $"View Radius: {viewRadius}"
+            );
+
             Target = collision.transform;
         }
     }

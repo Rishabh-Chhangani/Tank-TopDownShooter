@@ -562,6 +562,18 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: dd0f085e57eddc941b3384dc36ae0859, type: 3}
+    - target: {fileID: 512710339736016810, guid: f5e335a2010c1be4d800e437f249279e, type: 3}
+      propertyPath: m_Interpolate
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 512710339736016810, guid: f5e335a2010c1be4d800e437f249279e, type: 3}
+      propertyPath: m_SleepingMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 512710339736016810, guid: f5e335a2010c1be4d800e437f249279e, type: 3}
+      propertyPath: m_CollisionDetection
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 512710339736016811, guid: f5e335a2010c1be4d800e437f249279e, type: 3}
       propertyPath: m_Size.x
       value: 0.7232107

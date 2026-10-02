@@ -36,6 +36,10 @@ public class DefaultEnemyAI : MonoBehaviour
 
     private void Update()
     {
+        Debug.Log(
+        $"AI | Target: {(aiDetector.Target != null ? aiDetector.Target.name : "NULL")} | " +
+        $"Visible: {aiDetector.TargetVisible}"
+    );
         if (tank == null ||
             aiDetector == null)
         {
@@ -43,9 +47,11 @@ public class DefaultEnemyAI : MonoBehaviour
         }
 
         // No target detected.
-        // Perform the enemy's normal behaviour.
         if (aiDetector.Target == null)
         {
+            // FIX: Explicitly stop the tank's movement/rotation when the target is lost
+            tank.HandleTankMovement(Vector2.zero);
+
             if (patrolBehaviour != null)
             {
                 patrolBehaviour.PerformAction(
