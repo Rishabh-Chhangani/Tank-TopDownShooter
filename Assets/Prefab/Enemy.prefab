@@ -522,7 +522,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   healthBar: {fileID: 6572021403337647114}
-  damagable: {fileID: 6068997457571055312}
+  damageable: {fileID: 6068997457571055312}
 --- !u!1001 &3191135472889683379
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -762,7 +762,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e734ed505c0f3f45a0eb39dc5ddd5fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damagable: {fileID: 6068997457571055312}
+  damageable: {fileID: 6068997457571055312}
   healthCanvasGameObject: {fileID: 1596750747523574563}
 --- !u!114 &6068997457571055312 stripped
 MonoBehaviour:

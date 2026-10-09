@@ -5,18 +5,18 @@ using UnityEngine;
 public class HealthBarOnDamageAppear : MonoBehaviour
 {
     [SerializeField]
-   private Damagable damagable;
+   private Damageable damageable;
     [SerializeField]
     private GameObject healthCanvasGameObject;
 
     private void OnEnable()
     {
-        damagable.OnDamaged += ShowHealthBar;
+        damageable.OnDamaged += ShowHealthBar;
     }
 
     private void OnDisable()
     {
-        damagable.OnDamaged -= ShowHealthBar;
+        damageable.OnDamaged -= ShowHealthBar;
     }
 
     private void ShowHealthBar()

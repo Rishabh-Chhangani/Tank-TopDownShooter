@@ -41,7 +41,7 @@ public class TankController : MonoBehaviour
 
     public void HandleShoot()
     {
-        Debug.Log($"Weapon Lenght : {weapon.Length}");
+       
         foreach (var w in weapon)
         {
             w.Fire();

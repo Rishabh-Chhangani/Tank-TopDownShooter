@@ -23,18 +23,16 @@ public class SpawnManager : MonoBehaviour
 
             if (enemy != null)
             {
-                Damagable damagable = enemy.GetComponentInChildren<Damagable>();
+                Damageable damageable = enemy.GetComponentInChildren<Damageable>();
 
-                if (damagable != null)
+                if (damageable != null)
                 {
-                    damagable.OnDeath += HandleEnemyDeath;
-
-                    Debug.Log("Death event registered.");
+                    damageable.OnDeath += HandleEnemyDeath;
                 }
                 else
                 {
                     Debug.LogError(
-                        "Damagable component was not found on spawned enemy."
+                        "Damageable component was not found on spawned enemy."
                     );
                 }
             }
@@ -45,8 +43,6 @@ public class SpawnManager : MonoBehaviour
 
     private void HandleEnemyDeath()
     {
-        Debug.Log("SpawnManager received enemy death.");
-
         OnEnemyDestroyed?.Invoke();
     }
 

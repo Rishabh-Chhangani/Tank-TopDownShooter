@@ -37,18 +37,18 @@ public class Bullet : MonoBehaviour
     {
         startPosition = transform.position;
         rb2d.velocity = transform.up * bulletData.speed;
-        Debug.Log("Velocity: " + rb2d.velocity);
+       
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log("Collied" + collision.name);
-        Damagable damagable = collision.gameObject.GetComponent<Damagable>();
+        
+        Damageable damageable = collision.gameObject.GetComponent<Damageable>();
         OnHit?.Invoke();
-        if (damagable != null)
+        if (damageable != null)
         {
-            damagable.TakeDamage(bulletData.damage);
-            Debug.Log("Damage Object : "+ damagable.name);
+            damageable.TakeDamage(bulletData.damage);
+            
         }
         DisableBullet();
     }

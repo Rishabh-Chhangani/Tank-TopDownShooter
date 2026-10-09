@@ -68,23 +68,17 @@ public class TankMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Debug.Log(  
-        $"Tank FixedUpdate | " +
-        $"Transform: {transform.position} | " +
-        $"Rigidbody: {rb.position} | " +
-        $"Velocity: {rb.velocity} | " +
-        $"Movement: {movementVector}"
-    );
+       
         UpdateSpeed(movementVector);
         RotateTank(movementVector);
         Vector2 velocity = (Vector2)transform.up * currentSpeed * currentDriveDirection;
-        velocity = ClampTankMovemnt(velocity);
+        velocity = ClampTankMovement(velocity);
 
         rb.velocity = velocity;
     }
 
 
-    public Vector2 ClampTankMovemnt(Vector2 velocity)
+    public Vector2 ClampTankMovement(Vector2 velocity)
     {
         // If bounds haven't been set up yet, skip clamping entirely so it doesn't trap the tank at (0,0)
         if (min == Vector2.zero && max == Vector2.zero)

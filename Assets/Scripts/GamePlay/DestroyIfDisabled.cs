@@ -8,10 +8,8 @@ public class DestroyIfDisabled : MonoBehaviour
 
     private void OnDestroy()
     {
-        if(SelfDistructionEnabled)
-        {
+        if (SelfDistructionEnabled)
             Destroy(gameObject);
-        }
     }
 
 }

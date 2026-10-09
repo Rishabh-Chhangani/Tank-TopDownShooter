@@ -1775,7 +1775,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   healthBar: {fileID: 1324766892}
-  damagable: {fileID: 512710338819466527}
+  damageable: {fileID: 512710338819466527}
 --- !u!1 &1452385346
 GameObject:
   m_ObjectHideFlags: 0

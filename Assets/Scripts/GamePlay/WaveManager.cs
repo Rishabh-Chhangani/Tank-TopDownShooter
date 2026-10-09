@@ -31,7 +31,7 @@ public class WaveManager : MonoBehaviour
         {
             numberOfWaves++;
 
-            Debug.Log("Starting Wave " + numberOfWaves);
+            
 
             enemiesAlive = spawnManager.GetNumberOfEnemiesToSpawn();
 
@@ -39,7 +39,7 @@ public class WaveManager : MonoBehaviour
 
             yield return new WaitUntil(() => enemiesAlive <= 0);
 
-            Debug.Log("Wave " + numberOfWaves + " completed.");
+            
 
             if (numberOfWaves < maxNumberOfWaves)
             { 
@@ -48,12 +48,11 @@ public class WaveManager : MonoBehaviour
             }
         }
 
-        Debug.Log("All waves completed.");
+        
     }
 
     private void EnemyDestroyed()
     {
         enemiesAlive--;
-        Debug.Log("Enemy destroyed. Enemies remaining: " + enemiesAlive);
     }
 }

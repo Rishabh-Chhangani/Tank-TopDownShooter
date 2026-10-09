@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MuzzelFlash : MonoBehaviour
+public class MuzzleFlash : MonoBehaviour
 {
     [SerializeField]
     private WeaponTurret turret;
@@ -13,7 +13,7 @@ public class MuzzelFlash : MonoBehaviour
     private void Awake()
     {
         turret = GetComponentInParent<WeaponTurret>();
-        turret.OnShoot += MuzzelFlashEffect;
+        turret.OnShoot += MuzzleFlashEffect;
 
     }
 
@@ -22,20 +22,18 @@ public class MuzzelFlash : MonoBehaviour
     {
         if (turret != null)
         {
-            turret.OnShoot -= MuzzelFlashEffect;
+            turret.OnShoot -= MuzzleFlashEffect;
         }
     }
 
-    private void MuzzelFlashEffect()
+    private void MuzzleFlashEffect()
     {
-        Debug.Log("MuzzelFlashEffect");
+        
 
         animator.enabled = true;
-        animator.Play("MuzzelFlash Animation", 0, 0f);
+        animator.Play("MuzzleFlash Animation", 0, 0f);
 
-        Debug.Log(
-            $"Playing: {animator.GetCurrentAnimatorStateInfo(0).IsName("MuzzelFlash Animation")}"
-        );
+       
 
     }
 }

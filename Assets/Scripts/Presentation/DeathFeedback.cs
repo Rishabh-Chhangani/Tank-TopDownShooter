@@ -9,30 +9,30 @@ public class DeathFeedback : MonoBehaviour
     [SerializeField] private GameObject deathEffect;
 
     [SerializeField]
-    private Damagable damagable;
+    private Damageable damageable;
 
     
 
     private void OnEnable()
     {
-        if (damagable != null)
+        if (damageable != null)
         {
-            damagable.OnDeath += PlayDeathFeedback;
+            damageable.OnDeath += PlayDeathFeedback;
         }
     }
 
     private void OnDisable()
     {
-        if (damagable != null)
+        if (damageable != null)
         {
-            damagable.OnDeath -= PlayDeathFeedback;
+            damageable.OnDeath -= PlayDeathFeedback;
         }
     }
 
     private void PlayDeathFeedback()
     {
 
-        Debug.Log("PLAYER DEATH FEEDBACK CALLED");
+        
 
         GameObject effect = Instantiate(
             deathEffect,
@@ -40,7 +40,7 @@ public class DeathFeedback : MonoBehaviour
             Quaternion.identity
         );
 
-        Debug.Log("PLAYER DEATH EFFECT: " + effect.name);
+        
 
         Animator animator = effect.GetComponentInChildren<Animator>();
 
@@ -50,9 +50,7 @@ public class DeathFeedback : MonoBehaviour
             return;
         }
 
-        Debug.Log("PLAYER ANIMATOR FOUND");
-        Debug.Log("Controller: " + animator.runtimeAnimatorController);
-        Debug.Log("Enabled: " + animator.enabled);
+        
     }
 }
 

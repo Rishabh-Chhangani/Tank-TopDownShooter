@@ -37,7 +37,7 @@ public class ObjectPool : MonoBehaviour
         if (objectPool == null)
             objectPool = new Queue<GameObject>();
 
-        CreateOnjectParentIfNeeded();
+        CreateObjectParentIfNeeded();
 
         GameObject spawnedObject = null;
 
@@ -63,7 +63,7 @@ public class ObjectPool : MonoBehaviour
         return spawnedObject;
     }
 
-    private void CreateOnjectParentIfNeeded()
+    private void CreateObjectParentIfNeeded()
     {
         // Create a parent container for pooled objects if none assigned yet
         if (spawnedObjectsParent == null)

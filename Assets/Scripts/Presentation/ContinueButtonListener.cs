@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Button))]
-public class ContinueButtonListner : MonoBehaviour
+public class ContinueButtonListener : MonoBehaviour
 {
     [SerializeField] private SaveSystem saveSystem;
 

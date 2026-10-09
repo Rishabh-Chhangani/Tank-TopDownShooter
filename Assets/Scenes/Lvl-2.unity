@@ -3980,7 +3980,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   healthBar: {fileID: 1324766892}
-  damagable: {fileID: 512710338819466527}
+  damageable: {fileID: 512710338819466527}
 --- !u!4 &1355535620 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 512710340115270771, guid: f5e335a2010c1be4d800e437f249279e, type: 3}

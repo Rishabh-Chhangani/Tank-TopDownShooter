@@ -36,10 +36,7 @@ public class DefaultEnemyAI : MonoBehaviour
 
     private void Update()
     {
-        Debug.Log(
-        $"AI | Target: {(aiDetector.Target != null ? aiDetector.Target.name : "NULL")} | " +
-        $"Visible: {aiDetector.TargetVisible}"
-    );
+       
         if (tank == null ||
             aiDetector == null)
         {

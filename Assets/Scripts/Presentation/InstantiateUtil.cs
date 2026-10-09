@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class InstantiateUtli : MonoBehaviour
+public class InstantiateUtil : MonoBehaviour
 {
     public GameObject objectToInstantiate;
 

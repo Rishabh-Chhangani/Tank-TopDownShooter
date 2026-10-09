@@ -1,0 +1,2393 @@
+--- Assets/Scripts\GamePlay\Bullet.cs ---
+using System;
+using UnityEngine;
+
+public class Bullet : MonoBehaviour
+{
+    private Rigidbody2D rb2d;
+
+    public BulletData bulletData;
+
+    private Vector2 startPosition;
+    private float conquerDistance = 0;
+
+    public event Action OnHit;
+
+    private void Awake()
+    {
+        rb2d = GetComponent<Rigidbody2D>();
+    }
+
+    private void Update()
+    {
+        conquerDistance = Vector2.Distance(transform.position, startPosition);
+        if(conquerDistance >= bulletData.maxDistance)
+        {
+            DisableBullet();
+        }
+    }
+
+    private void DisableBullet()
+    {
+        rb2d.velocity = Vector2.zero;
+        gameObject.SetActive(false);
+
+    }
+
+    public void Initialize()
+    {
+        startPosition = transform.position;
+        rb2d.velocity = transform.up * bulletData.speed;
+       
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        
+        Damagable damagable = collision.gameObject.GetComponent<Damagable>();
+        OnHit?.Invoke();
+        if (damagable != null)
+        {
+            damagable.TakeDamage(bulletData.damage);
+            
+        }
+        DisableBullet();
+    }
+}
+
+--- Assets/Scripts\GamePlay\Damagable.cs ---
+﻿using System;
+using UnityEngine;
+
+public class Damagable : MonoBehaviour
+{
+    [SerializeField] private int currentHealth = 0;
+
+    public int maxHealth = 100;
+
+    private Transform rootEntity;
+    private bool isDead = false;
+
+    public event Action OnDeath;
+    public event Action OnDamaged;
+    public event Action<float> OnHealthChanged;
+
+    private void Awake()
+    {
+        if (currentHealth == 0)
+            currentHealth = maxHealth;
+
+        rootEntity = transform.root;
+    }
+
+    public int CurrentHealth
+    {
+        get
+        {
+            return currentHealth;
+        }
+        
+
+        set
+        {
+            currentHealth = value;
+
+            currentHealth = Mathf.Clamp(currentHealth,0,maxHealth);
+
+            OnHealthChanged?.Invoke((float)currentHealth / maxHealth);
+        }
+    }
+
+    public void TakeDamage(int damagePoints)
+    {
+        if (isDead)
+            return;
+        
+        CurrentHealth -= damagePoints;
+
+        if (currentHealth <= 0)
+            Die();
+        else
+            OnDamaged?.Invoke();
+    }
+
+    public void Die()
+    {
+        if (isDead)
+            return;
+        
+        isDead = true;
+        
+        OnDeath?.Invoke();
+
+        Destroy(rootEntity.gameObject);
+    }
+}
+
+--- Assets/Scripts\GamePlay\DestroyIfDisabled.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class DestroyIfDisabled : MonoBehaviour
+{
+    public bool SelfDistructionEnabled { get; set; } = false;
+
+    private void OnDestroy()
+    {
+        if (SelfDistructionEnabled)
+            Destroy(gameObject);
+    }
+
+}
+
+
+--- Assets/Scripts\GamePlay\DestroyUtil.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class DestroyUtil : MonoBehaviour
+{
+  public void DetroyHelper()
+    {
+        Destroy(gameObject);
+    }
+}
+
+
+--- Assets/Scripts\GamePlay\EnemySpawner.cs ---
+using System.Collections.Generic;
+using UnityEngine;
+
+public class EnemySpawner : MonoBehaviour
+{
+    [SerializeField] private List<SpawnPoint> _allSpawnPoints;
+    [SerializeField] private List<SpawnPoint> _availableSpawnPoints;
+    [SerializeField] private GameObject enemyPrefab;
+
+    private Transform enemyParent;
+
+    private void Awake()
+    {
+        _allSpawnPoints = new List<SpawnPoint>(
+            FindObjectsOfType<SpawnPoint>()
+        );
+
+        _availableSpawnPoints = new List<SpawnPoint>(_allSpawnPoints);
+    }
+
+    private void Start()
+    {
+        GameObject enemyParentObject = GameObject.Find("Enemies");
+
+        if (enemyParentObject != null)
+        {
+            enemyParent = enemyParentObject.transform;
+        }
+        else
+        {
+            Debug.LogWarning("Enemy Parent not found in scene");
+        }
+    }
+
+    public GameObject Spawn()
+    {
+        if (_availableSpawnPoints.Count == 0)
+        {
+            Debug.LogWarning(
+                "No available Spawn points have been found. Check scene."
+            );
+
+            return null;
+        }
+
+        int index = Random.Range(0, _availableSpawnPoints.Count);
+
+        SpawnPoint spawnPoint = _availableSpawnPoints[index];
+
+        GameObject enemy = Instantiate(
+            enemyPrefab,
+            spawnPoint.transform.position,
+            spawnPoint.transform.rotation
+        );
+
+        TankController tank = enemy.GetComponentInChildren<TankController>();
+        Rigidbody2D rb = tank.GetComponent<Rigidbody2D>();
+
+       
+
+        if (enemyParent != null)
+        {
+            enemy.transform.SetParent(enemyParent);
+        }
+        
+        _availableSpawnPoints.RemoveAt(index);
+
+        return enemy;
+    }
+
+
+    public void ResetSpawnPoints()
+    {
+        _availableSpawnPoints = new List<SpawnPoint>(_allSpawnPoints);
+    }
+}
+
+--- Assets/Scripts\GamePlay\GameManager.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class GameManager : MonoBehaviour
+{
+    private GameObject player;
+    private SaveSystem saveSystem;
+
+    private void Awake()
+    {
+        SceneManager.sceneLoaded += Initialized;
+        DontDestroyOnLoad(gameObject);
+    }
+
+    private void Initialized(Scene scene, LoadSceneMode sceneMode)
+    {
+       
+        var playerInput = FindAnyObjectByType<PlayerInputHandler>();
+        if (playerInput != null)
+        {
+            player = playerInput.gameObject;
+        }
+        saveSystem = FindObjectOfType<SaveSystem>();
+        if( player != null && saveSystem.LoadedData != null)
+        {
+            var damagable = player.GetComponentInChildren<Damagable>();
+            damagable.CurrentHealth = saveSystem.LoadedData.playerHealth;
+
+        }
+    }
+
+    public void LoadLevel()
+    {
+        if(saveSystem.LoadedData != null)
+        {
+            SceneManager.LoadScene(saveSystem.LoadedData.sceneIndex);
+            return;
+        }
+        LoadNextLevel();
+    }
+
+    public void LoadNextLevel()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+    }
+
+    public void SaveData()
+    {
+        if (player != null)
+            saveSystem.SaveData(SceneManager.GetActiveScene().buildIndex + 1, player.GetComponentInChildren<Damagable>().CurrentHealth);
+
+    }
+}
+
+
+--- Assets/Scripts\GamePlay\ObjectPool.cs ---
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class ObjectPool : MonoBehaviour
+{
+    [SerializeField]
+    protected GameObject objectToPool;
+
+    [SerializeField]
+    protected int poolSize = 10;
+
+    protected Queue<GameObject> objectPool;
+
+    public Transform spawnedObjectsParent;
+
+    public bool alwaysDestroy = false;
+
+    private void Awake()
+    {
+        objectPool = new Queue<GameObject> ();
+    }
+
+    public void Initialize(GameObject objectToPool, int poolSize = 10)
+    {
+        this.objectToPool = objectToPool;
+        this.poolSize = poolSize;
+        if (objectPool == null)
+            objectPool = new Queue<GameObject>();
+    }
+
+
+    public GameObject CreateObject()
+    {
+        // Ensure internal queue is initialized in case Awake wasn't run or Initialize wasn't called.
+        if (objectPool == null)
+            objectPool = new Queue<GameObject>();
+
+        CreateOnjectParentIfNeeded();
+
+        GameObject spawnedObject = null;
+
+        if(objectPool.Count <  poolSize)
+        {
+            spawnedObject = Instantiate(objectToPool, transform.position, Quaternion.identity);
+            spawnedObject.name = transform.root.name + "_" + objectToPool.name + "_" + objectPool.Count;
+            spawnedObject.transform.SetParent(spawnedObjectsParent);
+            spawnedObject.AddComponent<DestroyIfDisabled>();
+
+        }
+        else
+        {
+            spawnedObject = objectPool.Dequeue();
+            spawnedObject.transform.position = transform.position;
+            spawnedObject.transform.rotation = Quaternion.identity;
+            spawnedObject.SetActive(true);
+
+        }
+
+
+        objectPool.Enqueue(spawnedObject);
+        return spawnedObject;
+    }
+
+    private void CreateOnjectParentIfNeeded()
+    {
+        // Create a parent container for pooled objects if none assigned yet
+        if (spawnedObjectsParent == null)
+        {
+            string name = "ObjectPool" + (objectToPool != null ? objectToPool.name : "");
+            var parentObject = GameObject.Find(name);
+            if (parentObject != null)
+            {
+                spawnedObjectsParent = parentObject.transform;
+            }
+            else
+            {
+                spawnedObjectsParent = new GameObject(name).transform;
+            }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (objectPool == null)
+            return;
+
+        foreach(var item in objectPool)
+        {
+            if(item == null)
+            {
+                continue;
+            }
+            else if(item.activeSelf == false || alwaysDestroy )
+            {
+                Destroy(item); 
+            }
+            else
+            {
+                item.GetComponent<DestroyIfDisabled>().SelfDistructionEnabled = true;
+            }
+
+        }
+    }
+
+}
+
+
+--- Assets/Scripts\GamePlay\SaveSystem.cs ---
+using System;
+using UnityEngine;
+
+public class SaveSystem : MonoBehaviour
+{
+    public string playerHealthKey = "PlayerHealth";
+    public string sceneKey = "SceneIndex";
+    public string savePresentKey = "SavePresent";
+
+    public LoadedData LoadedData { get; private set; }
+
+    public event Action<bool> OnDataLoadedResult;
+
+    private bool isInitialized = false;
+
+    private void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
+
+    private void Start()
+    {
+        if (isInitialized)
+            return;
+
+        bool result = LoadData();
+
+        OnDataLoadedResult?.Invoke(result);
+
+        isInitialized = true;
+    }
+
+    private bool LoadData()
+    {
+        if (PlayerPrefs.GetInt(savePresentKey) == 1)
+        {
+            LoadedData = new LoadedData
+            {
+                playerHealth = PlayerPrefs.GetInt(playerHealthKey),
+                sceneIndex = PlayerPrefs.GetInt(sceneKey)
+            };
+
+            return true;
+        }
+
+        LoadedData = null;
+
+        return false;
+    }
+
+    public void SaveData(int sceneIndex, int playerHealth)
+    {
+        if (LoadedData == null)
+            LoadedData = new LoadedData();
+
+        LoadedData.playerHealth = playerHealth;
+        LoadedData.sceneIndex = sceneIndex;
+
+        PlayerPrefs.SetInt(playerHealthKey, playerHealth);
+        PlayerPrefs.SetInt(sceneKey, sceneIndex);
+        PlayerPrefs.SetInt(savePresentKey, 1);
+
+        PlayerPrefs.Save();
+    }
+
+    public void ResetData()
+    {
+        PlayerPrefs.DeleteKey(playerHealthKey);
+        PlayerPrefs.DeleteKey(sceneKey);
+        PlayerPrefs.DeleteKey(savePresentKey);
+
+        PlayerPrefs.Save();
+
+        LoadedData = null;
+    }
+}
+
+public class LoadedData
+{
+    public int playerHealth = -1;
+    public int sceneIndex = -1;
+}
+
+--- Assets/Scripts\GamePlay\SpawnManager.cs ---
+using System;
+using System.Collections;
+using UnityEngine;
+
+public class SpawnManager : MonoBehaviour
+{
+    [SerializeField] private EnemySpawner enemySpawner;
+    [SerializeField] private float timeBetweenSpawn = 0.4f;
+    [SerializeField] private int numberOfEnemiesToSpawn = 5;
+
+    public event Action OnEnemyDestroyed;
+
+    public int GetNumberOfEnemiesToSpawn()
+    {
+        return numberOfEnemiesToSpawn;
+    }
+
+    public IEnumerator ManageSpawn()
+    {
+        for (int i = 0; i < numberOfEnemiesToSpawn; i++)
+        {
+            GameObject enemy = enemySpawner.Spawn();
+
+            if (enemy != null)
+            {
+                Damagable damagable = enemy.GetComponentInChildren<Damagable>();
+
+                if (damagable != null)
+                {
+                    damagable.OnDeath += HandleEnemyDeath;
+                }
+                else
+                {
+                    Debug.LogError(
+                        "Damagable component was not found on spawned enemy."
+                    );
+                }
+            }
+
+            yield return new WaitForSeconds(timeBetweenSpawn);
+        }
+    }
+
+    private void HandleEnemyDeath()
+    {
+        OnEnemyDestroyed?.Invoke();
+    }
+
+    public void ResetEnemySpawnPoints()
+
+    {
+        enemySpawner.ResetSpawnPoints();
+    }
+}
+
+--- Assets/Scripts\GamePlay\SpawnPoint.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class SpawnPoint : MonoBehaviour
+{
+    // Start is called before the first frame update
+    void Start()
+    {
+        
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        
+    }
+}
+
+
+--- Assets/Scripts\GamePlay\WaveManager.cs ---
+using System.Collections;
+using UnityEngine;
+
+public class WaveManager : MonoBehaviour
+{
+    [SerializeField] private SpawnManager spawnManager;
+    [SerializeField] private int maxNumberOfWaves = 2;
+    [SerializeField] private float timeBetweenWaves = 5f;
+
+    private int numberOfWaves = 0;
+    private int enemiesAlive = 0;
+
+    private void Start()
+    {
+        spawnManager.OnEnemyDestroyed += EnemyDestroyed;
+
+        StartCoroutine(WaveLoop());
+    }
+
+    private void OnDestroy()
+    {
+        if (spawnManager != null)
+        {
+            spawnManager.OnEnemyDestroyed -= EnemyDestroyed;
+        }
+    }
+
+    private IEnumerator WaveLoop()
+    {
+        while (numberOfWaves < maxNumberOfWaves)
+        {
+            numberOfWaves++;
+
+            
+
+            enemiesAlive = spawnManager.GetNumberOfEnemiesToSpawn();
+
+            yield return StartCoroutine(spawnManager.ManageSpawn());
+
+            yield return new WaitUntil(() => enemiesAlive <= 0);
+
+            
+
+            if (numberOfWaves < maxNumberOfWaves)
+            { 
+                spawnManager.ResetEnemySpawnPoints();
+                yield return new WaitForSeconds(timeBetweenWaves);
+            }
+        }
+
+        
+    }
+
+    private void EnemyDestroyed()
+    {
+        enemiesAlive--;
+    }
+}
+
+--- Assets/Scripts\GamePlay\AI\AIBehaviour.cs ---
+﻿using UnityEngine;
+public abstract class AIBehaviour : MonoBehaviour 
+{
+    public abstract void PerformAction(TankController tank, AIDetector aiDetector);
+}
+
+--- Assets/Scripts\GamePlay\AI\AIChaseBehaviour.cs ---
+using UnityEngine;
+
+public class AIChaseBehaviour : AIBehaviour
+{
+    [SerializeField]
+    private float rotationThreshold = 0.98f;
+
+    public override void PerformAction(
+        TankController tank,
+        AIDetector aiDetector)
+    {
+        // FIX 1: If tank, detector, or target is missing, explicitly stop the tank 
+        // instead of leaving the last movement input active!
+        if (tank == null || aiDetector == null || aiDetector.Target == null)
+        {
+            if (tank != null)
+            {
+                tank.HandleTankMovement(Vector2.zero);
+            }
+            return;
+        }
+
+        Vector2 directionToTarget =
+            (Vector2)aiDetector.Target.position -
+            (Vector2)tank.tankMovement.transform.position;
+
+        if (directionToTarget.sqrMagnitude <= 0.01f)
+        {
+            tank.HandleTankMovement(Vector2.zero);
+            return;
+        }
+
+        directionToTarget.Normalize();
+
+        Vector2 tankForward = -tank.tankMovement.transform.up;
+
+        float dotProduct =
+            Vector2.Dot(
+                tankForward,
+                directionToTarget);
+
+        if (dotProduct >= rotationThreshold)
+        {
+            tank.HandleTankMovement(Vector2.up);
+            return;
+        }
+
+        float crossProduct =
+            tankForward.x * directionToTarget.y -
+            tankForward.y * directionToTarget.x;
+
+        // FIX 2: Corrected the typo (-crossProduct3f -> -crossProduct * 3f)
+        float rotationResult = Mathf.Clamp(-crossProduct * 3f, -1f, 1f);
+
+        tank.HandleTankMovement(
+            new Vector2(
+                rotationResult,
+                1f));
+    }
+}
+
+--- Assets/Scripts\GamePlay\AI\AIDetector.cs ---
+using System.Collections;
+using UnityEngine;
+
+public class AIDetector : MonoBehaviour
+{
+    [Header("Detection")]
+    [Range(1f, 15f)] [SerializeField] private float viewRadius = 11f;
+
+    [SerializeField]
+    private float detectionCheckDelay = 0.1f;
+
+    // Not serialized: target must come only from runtime detection,
+    // never from a reference assigned in the Inspector / prefab.
+    private Transform target;   
+
+    [SerializeField] private LayerMask playerLayerMask;
+
+    [SerializeField] private LayerMask visibilityLayer;
+
+    [Header("Shooting")]
+    [SerializeField] private float shootingRange = 6f;
+
+    [field: SerializeField] public bool TargetVisible { get; private set; }
+
+    public Transform Target
+    {
+        get => target;
+
+        set
+        {
+            target = value;
+            TargetVisible = false;
+        }
+    }
+
+    public bool IsTargetInShootingRange(Transform shooter)
+    {
+        if (Target == null || shooter == null)
+            return false;
+
+        float distance = Vector2.Distance(
+            shooter.position,
+            Target.position);
+
+        return distance <= shootingRange;
+    }
+
+    public float ShootingRange => shootingRange;
+
+    private void Start()
+    {
+        StartCoroutine(DetectionCoroutine());
+    }
+
+    private void Update()
+    {
+        if (Target != null)
+        {
+            TargetVisible = CheckTargetVisible();
+        }
+    }
+
+    private bool CheckTargetVisible()
+    {
+        Vector2 direction =
+            Target.position - transform.position;
+
+        RaycastHit2D result = Physics2D.Raycast(
+            transform.position,
+            direction,
+            viewRadius,
+            visibilityLayer);
+
+        if (result.collider != null)
+        {
+            return (playerLayerMask &
+                    (1 << result.collider.gameObject.layer)) != 0;
+        }
+
+        return false;
+    }
+
+    private void DetectTarget()
+    {
+        if (Target == null)
+        {
+            CheckIfPlayerInRange();
+        }
+        else
+        {
+            DetectIfOutOfRange();
+        }
+    }
+
+    private void DetectIfOutOfRange()
+    {
+        if (Target == null ||
+            !Target.gameObject.activeSelf ||
+            Vector2.Distance(
+                transform.position,
+                Target.position) > viewRadius + 1f)
+        {
+            Target = null;
+        }
+    }
+
+    private void CheckIfPlayerInRange()
+    {
+        Collider2D collision = Physics2D.OverlapCircle(
+            transform.position,
+            viewRadius,
+            playerLayerMask);
+
+        if (collision != null)
+        {
+            float distance = Vector2.Distance(
+                transform.position,
+                collision.transform.position);
+
+            
+
+            Target = collision.transform;
+        }
+    }
+
+    private IEnumerator DetectionCoroutine()
+    {
+        while (true)
+        {
+            DetectTarget();
+
+            yield return new WaitForSeconds(
+                detectionCheckDelay);
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        TankController tank =
+            GetComponentInParent<TankController>();
+
+        Vector3 rangeOrigin = transform.position;
+
+        if (tank != null)
+        {
+            rangeOrigin = tank.transform.position;
+        }
+
+        // Detection range
+        Gizmos.color = Color.blue;
+
+        Gizmos.DrawWireSphere(
+            rangeOrigin,
+            viewRadius);
+
+        // Shooting range
+        Gizmos.color = Color.red;
+
+        Gizmos.DrawWireSphere(
+            rangeOrigin,
+            shootingRange);
+    }
+}
+
+--- Assets/Scripts\GamePlay\AI\AIPatrolPathBehaviour.cs ---
+using System.Collections;
+using UnityEngine;
+
+public class AIPatrolPathBehaviour : AIBehaviour
+{
+    [SerializeField]
+    private PatrolPath patrolPath;
+
+    [Range(0.1f, 1f)]
+    [SerializeField]
+    private float arriveDistance = 1f;
+
+    [SerializeField]
+    private float waitTime = 0.5f;
+
+    [SerializeField]
+    private bool isWaiting = false;
+
+    [SerializeField]
+    private Vector2 currentPatrolTarget = Vector2.zero;
+
+    private bool isInitialized = false;
+
+    private int currentIndex = -1;
+
+    private void Awake()
+    {
+        if (patrolPath == null)
+        {
+            patrolPath =
+                GetComponentInChildren<PatrolPath>();
+        }
+    }
+
+    public override void PerformAction(
+        TankController tank,
+        AIDetector aiDetector)
+    {
+        if (tank == null ||
+            patrolPath == null)
+        {
+            return;
+        }
+
+        if (patrolPath.Length < 2)
+            return;
+
+        if (!isWaiting)
+        {
+            if (!isInitialized)
+            {
+                PatrolPath.PathPoint currentPathPoint =
+                    patrolPath.GetClosestPathPoint(
+                        tank.transform.position);
+
+                currentIndex =
+                    currentPathPoint.Index;
+
+                currentPatrolTarget =
+                    currentPathPoint.Position;
+
+                isInitialized = true;
+            }
+
+            if (Vector2.Distance(
+                    tank.transform.position,
+                    currentPatrolTarget) < arriveDistance)
+            {
+                isWaiting = true;
+
+                StartCoroutine(
+                    WaitCoroutine());
+
+                return;
+            }
+        }
+
+        Vector2 directionToGo =
+            currentPatrolTarget -
+            (Vector2)tank.tankMovement.transform.position;
+
+        if (directionToGo.sqrMagnitude <= 0.01f)
+        {
+            tank.HandleTankMovement(
+                Vector2.zero);
+
+            return;
+        }
+
+        float dotProduct =
+            Vector2.Dot(
+                tank.tankMovement.transform.up,
+                directionToGo.normalized);
+
+        if (dotProduct < 0.98f)
+        {
+            Vector3 crossProduct =
+                Vector3.Cross(
+                    tank.tankMovement.transform.up,
+                    directionToGo.normalized);
+
+            int rotationResult =
+                crossProduct.z >= 0 ? -1 : 1;
+
+            tank.HandleTankMovement(
+                new Vector2(
+                    rotationResult,
+                    1f));
+        }
+        else
+        {
+            tank.HandleTankMovement(
+                Vector2.up);
+        }
+    }
+
+    private IEnumerator WaitCoroutine()
+    {
+        yield return new WaitForSeconds(
+            waitTime);
+
+        PatrolPath.PathPoint nextPathPoint =
+            patrolPath.GetNextPathPoint(
+                currentIndex);
+
+        currentPatrolTarget =
+            nextPathPoint.Position;
+
+        currentIndex =
+            nextPathPoint.Index;
+
+        isWaiting = false;
+    }
+}
+
+--- Assets/Scripts\GamePlay\AI\AIShootBehaviour.cs ---
+using UnityEngine;
+
+public class AIShootBehaviour : AIBehaviour
+{
+    [Range(1f, 180f)]
+    public float fieldOfVisionForShooting = 60f;
+
+    // Added: store the remaining cooldown before next shot
+    private float currentShootCooldown = 0f;
+
+    [SerializeField, Min(0f)]
+    private float shootCooldown = 1f;
+
+    public override void PerformAction(
+      TankController tank,
+      AIDetector aiDetector)
+    {
+        if (tank == null ||
+            aiDetector == null ||
+            aiDetector.Target == null ||
+            tank.aimTurret == null)
+        {
+            return;
+        }
+
+        // Never shoot outside shooting range.
+        if (!aiDetector.IsTargetInShootingRange(tank.transform))
+            return;
+
+        // Never shoot without line of sight.
+        if (!aiDetector.TargetVisible)
+            return;
+
+        tank.HandleTurretRotation(
+            aiDetector.Target.position);
+
+        bool inFOV = TargetInFOV(
+            tank,
+            aiDetector);
+
+        if (!inFOV)
+            return;
+
+        if (currentShootCooldown > 0f)
+            return;
+
+        tank.HandleShoot();
+
+        currentShootCooldown = shootCooldown;
+    }
+
+    private bool TargetInFOV(
+        TankController tank,
+        AIDetector aiDetector)
+    {
+        if (aiDetector == null ||
+            aiDetector.Target == null ||
+            tank == null ||
+            tank.aimTurret == null)
+        {
+            return false;
+        }
+
+        Vector2 direction =
+            aiDetector.Target.position -
+            tank.aimTurret.transform.position;
+
+        float angle =
+            Vector2.Angle(
+                -tank.aimTurret.transform.up,
+                direction);
+
+        return angle <
+               fieldOfVisionForShooting / 2f;
+    }
+
+    private void Update()
+    {
+        if (currentShootCooldown > 0f)
+        {
+            currentShootCooldown -= Time.deltaTime;
+
+            if (currentShootCooldown < 0f)
+                currentShootCooldown = 0f;
+        }
+    }
+}
+
+--- Assets/Scripts\GamePlay\AI\AIStaticPatrolBehaviour.cs ---
+using UnityEngine;
+
+public class AIStaticPatrolBehaviour : AIBehaviour
+{
+    [SerializeField]
+    private float patrolDelay = 1f;
+
+    [SerializeField]
+    private Vector2 randomDirection = Vector2.zero;
+
+    [SerializeField]
+    private float currentPatrolDelay;
+
+    private void Awake()
+    {
+        randomDirection =
+            Random.insideUnitCircle.normalized;
+
+        currentPatrolDelay = patrolDelay;
+    }
+
+    public override void PerformAction(
+        TankController tank,
+        AIDetector aiDetector)
+    {
+        if (tank == null ||
+            tank.aimTurret == null)
+        {
+            return;
+        }
+
+        float angle =
+            Vector2.Angle(
+                tank.aimTurret.transform.right,
+                randomDirection);
+
+        if (currentPatrolDelay <= 0f &&
+            angle < 2f)
+        {
+            randomDirection =
+                Random.insideUnitCircle.normalized;
+
+            currentPatrolDelay = patrolDelay;
+        }
+        else
+        {
+            if (currentPatrolDelay > 0f)
+            {
+                currentPatrolDelay -=
+                    Time.deltaTime;
+            }
+            else
+            {
+                tank.HandleTurretRotation(
+                    (Vector2)tank.aimTurret.transform.position +
+                    randomDirection);
+            }
+        }
+    }
+}
+
+--- Assets/Scripts\GamePlay\AI\DefaultEnemyAI.cs ---
+using UnityEngine;
+
+public class DefaultEnemyAI : MonoBehaviour
+{
+    [Header("AI Behaviours")]
+    [SerializeField]
+    private AIBehaviour shootBehaviour;
+
+    [SerializeField]
+    private AIBehaviour chaseBehaviour;
+
+    [SerializeField]
+    private AIBehaviour patrolBehaviour;
+
+    [Header("References")]
+    [SerializeField]
+    private TankController tank;
+
+    [SerializeField]
+    private AIDetector aiDetector;
+
+    private void Awake()
+    {
+        if (aiDetector == null)
+        {
+            aiDetector =
+                GetComponentInChildren<AIDetector>();
+        }
+
+        if (tank == null)
+        {
+            tank =
+                GetComponentInChildren<TankController>();
+        }
+    }
+
+    private void Update()
+    {
+       
+        if (tank == null ||
+            aiDetector == null)
+        {
+            return;
+        }
+
+        // No target detected.
+        if (aiDetector.Target == null)
+        {
+            // FIX: Explicitly stop the tank's movement/rotation when the target is lost
+            tank.HandleTankMovement(Vector2.zero);
+
+            if (patrolBehaviour != null)
+            {
+                patrolBehaviour.PerformAction(
+                    tank,
+                    aiDetector);
+            }
+
+            return;
+        }
+
+        // Target detected.
+        // Always chase the target.
+        if (chaseBehaviour != null)
+        {
+            chaseBehaviour.PerformAction(
+                tank,
+                aiDetector);
+        }
+
+        // Shooting is independent of chasing.
+        // The enemy can move and shoot at the same time.
+        if (aiDetector.IsTargetInShootingRange(
+                tank.transform) &&
+            aiDetector.TargetVisible)
+        {
+            if (shootBehaviour != null)
+            {
+                shootBehaviour.PerformAction(
+                    tank,
+                    aiDetector);
+            }
+        }
+    }
+}
+
+--- Assets/Scripts\GamePlay\AI\PatrolPath.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+public class PatrolPath : MonoBehaviour
+{
+    public List<Transform> patrolPoints = new List<Transform>();
+
+    public int Length { get => patrolPoints.Count; }
+
+    [Header("Gizmo paramenters")]
+    public Color pointsColor = Color.blue;
+    public float pointSize = 1.0f;
+    public Color lineColor = Color.magenta;
+
+    public struct PathPoint
+    {
+        public int Index;
+        public Vector2 Position;
+    }
+
+    public PathPoint GetClosestPathPoint(Vector2 tankPosition)
+    {
+        var minDistance = float.MaxValue;
+        var index = 1;
+        for(int i = 0; i< patrolPoints.Count; i++)
+        {
+            var tempDistance = Vector2.Distance(tankPosition, patrolPoints[i].position);
+            if(tempDistance < minDistance)
+            {
+                minDistance = tempDistance;
+                index = i;
+            }
+        
+        }
+
+        return new PathPoint {  Index = index, Position = patrolPoints[index].position };   
+    }
+
+
+    public PathPoint GetNextPathPoint(int index)
+    {
+        var newIndex = index + 1 >= patrolPoints.Count ? 0 : index + 1;
+        return new PathPoint { Index = newIndex, Position = patrolPoints[newIndex].position };
+    }
+    private void OnDrawGizmos()
+    {
+        if(patrolPoints.Count == 0)
+            return;
+        for(int i = patrolPoints.Count-1; i >= 0; i--)
+        {
+            if(i == -1 || patrolPoints[i] == null)
+            {
+                return;
+            }
+            Gizmos.color = pointsColor;
+            Gizmos.DrawSphere(patrolPoints[i].position, pointSize);
+
+            if (patrolPoints.Count == 1 || i == 0)
+                return;
+            Gizmos.color = lineColor;
+            Gizmos.DrawLine(patrolPoints[i].position, patrolPoints[i - 1].position);
+
+            if(patrolPoints.Count > 2 && i == patrolPoints.Count -1)
+            {
+                Gizmos.DrawLine(patrolPoints[i].position, patrolPoints[0].position);
+            }
+        }
+    }
+
+}
+
+
+--- Assets/Scripts\GamePlay\DataSO\BulletData.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "NewBuletData", menuName = "Data/BulletData")]
+public class BulletData : ScriptableObject
+{
+    public float speed = 10;
+    public int damage = 50;
+    public float maxDistance = 100;
+}
+
+
+--- Assets/Scripts\GamePlay\DataSO\TankMovementData.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+
+[CreateAssetMenu(fileName = "NewTankMovementData", menuName = "Data/TankMovement")]
+public class TankMovementData : ScriptableObject
+{
+    public float rotationSpeed = 180f;
+    public float maxSpeed = 10f;
+    public float acceleration = 70;
+    public float deceleration = 50;
+
+}
+
+
+--- Assets/Scripts\GamePlay\DataSO\TurretData.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "NewTurretData", menuName = "Data/TurretData")]
+public class TurretData : ScriptableObject
+{
+
+    public GameObject bulletPrefab;
+    public float reloadDelay = 1;
+    public BulletData bulletData;
+}
+
+
+--- Assets/Scripts\GamePlay\Player\PlayerController.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    [SerializeField]
+    private PlayerInputHandler inputHandler;
+    [SerializeField]
+    private TankController tankController;
+
+
+
+    [SerializeField]
+    private Camera mainCamera;
+
+    
+
+
+
+    private void Awake()
+    {
+        inputHandler = GetComponent<PlayerInputHandler>();
+        tankController = GetComponentInChildren<TankController>();
+
+        if (mainCamera == null)
+            mainCamera = Camera.main;
+    }
+
+    private void Update()
+    {
+        tankController.HandleTankMovement(inputHandler.MoveInput);
+        tankController.HandleTurretRotation(GetMouseWorldPosition(inputHandler.LookInput));
+    }
+
+   public Vector2 GetMouseWorldPosition(Vector3 mouseScreenPosition)
+    {
+        mouseScreenPosition.z = mainCamera.nearClipPlane;
+        Vector2 mouseWorldPosition = mainCamera.ScreenToWorldPoint(mouseScreenPosition);
+        return mouseWorldPosition;
+    }
+
+    private void OnEnable()
+    {
+        if (inputHandler != null)
+        {
+            inputHandler.FirePerformed += HandleShoot;
+        }
+    }
+    private void OnDisable()
+    {
+        if (inputHandler != null)
+        {
+            inputHandler.FirePerformed -= HandleShoot;
+        }
+    }
+
+    public void HandleShoot()
+    {
+        tankController.HandleShoot();
+    }
+}
+
+
+--- Assets/Scripts\GamePlay\Player\PlayerInputHandler.cs ---
+using System;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+
+
+public class PlayerInputHandler : MonoBehaviour
+{
+    
+
+    public Vector2 MoveInput { get; private set; }
+    public Vector2 LookInput { get; private set; }
+    
+    public event Action FirePerformed;
+    public event Action ReloadPerformed;
+    public event Action PausePerformed;
+
+
+
+ 
+
+    public void OnMove(InputValue value)
+    {
+        MoveInput = value.Get<Vector2>();
+    }
+
+    public void OnLook(InputValue value)
+    {
+        
+        LookInput = value.Get<Vector2>();
+    }
+
+    public void OnFire(InputValue value)
+    {
+        if(value.isPressed)
+            FirePerformed?.Invoke();
+    }
+
+    public void OnReload(InputValue value)
+    {
+        if(value.isPressed)
+            ReloadPerformed?.Invoke();
+    }
+
+    public void OnPause(InputValue value)
+    {
+        if(value.isPressed)
+            PausePerformed?.Invoke();
+    }
+
+   
+
+}
+
+
+--- Assets/Scripts\GamePlay\Tank\AimTurret.cs ---
+using UnityEngine;
+
+
+
+public class AimTurret: MonoBehaviour
+{
+    
+
+    
+
+    [SerializeField] private  Transform tankTurretParent;
+
+
+
+    [SerializeField] private float turretRotationSpeed = 800f;
+
+    [SerializeField]
+    private float visualOffset = -90f;
+
+    
+
+    private void Awake()
+    {
+        if(tankTurretParent == null)
+        {
+            Debug.LogError("TankTurretParent is not assigned!");
+            enabled = false;
+            return;
+        }
+    }
+
+
+
+
+    public void RotateTurret(Vector2 targetWorldPosition)
+    {
+        
+        Vector2 direction = targetWorldPosition - (Vector2)tankTurretParent.position;
+
+        float desiredAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg; 
+        float localAngle = desiredAngle - tankTurretParent.parent.eulerAngles.z - visualOffset;
+        Quaternion targetRotation = Quaternion.Euler(0f, 0f, localAngle);
+        float maxRotationThisFrame = turretRotationSpeed * Time.deltaTime;
+
+        tankTurretParent.localRotation = Quaternion.RotateTowards(tankTurretParent.localRotation,targetRotation,maxRotationThisFrame);
+
+    }
+
+
+
+}
+
+
+
+--- Assets/Scripts\GamePlay\Tank\TankController.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class TankController : MonoBehaviour
+{
+    public TankMovement tankMovement;
+    public AimTurret aimTurret;
+    public WeaponTurret[] weapon;
+
+    private void Awake()
+    {
+       
+
+        if (tankMovement == null)
+            tankMovement = GetComponent<TankMovement>();
+
+        if (aimTurret == null)
+            aimTurret = GetComponentInChildren<AimTurret>();
+
+        if (weapon == null || weapon.Length == 0)
+            weapon = GetComponentsInChildren<WeaponTurret>();
+
+    }
+
+    public void HandleTankMovement(Vector2 movementVector)
+    {
+        if (tankMovement == null)
+        {
+            Debug.LogError("TankMovement reference is null in TankController. Ensure a TankMovement component exists or assign it in the inspector.");
+            return;
+        }
+
+        tankMovement.MoveTank(movementVector);
+    }
+
+    public void HandleTurretRotation(Vector2 targetPosition)
+    {
+        aimTurret.RotateTurret(targetPosition);
+    }
+
+    public void HandleShoot()
+    {
+       
+        foreach (var w in weapon)
+        {
+            w.Fire();
+        }
+    }
+
+
+
+}
+
+
+--- Assets/Scripts\GamePlay\Tank\TankMovement.cs ---
+
+using System;
+using UnityEngine;
+
+
+[RequireComponent(typeof(Rigidbody2D))]
+
+public class TankMovement : MonoBehaviour
+{
+    private Rigidbody2D rb;
+    [SerializeField]
+    private Vector2 min;
+    [SerializeField]
+    private Vector2 max;
+
+    private Vector2 movementVector;
+    public TankMovementData movementData;
+
+    public float currentSpeed = 0;
+    public float currentDriveDirection = 1;
+
+    public event Action<float> OnSpeedChange;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+
+
+        if (rb == null)
+        {
+            Debug.LogError("Rigidbody2D not found.");
+            enabled = false;
+            return;
+        }
+
+    }
+
+    public void MoveTank(Vector2 movementVector)
+    {
+        this.movementVector = -movementVector;
+
+
+    }
+    private void UpdateSpeed(Vector2 movementInput)
+    {
+        float verticalInput = movementInput.y;
+
+        if (Mathf.Abs(verticalInput) > 0.01f)
+        {
+            currentSpeed += movementData.acceleration * Time.fixedDeltaTime;
+            currentSpeed = Mathf.Clamp(currentSpeed, 0f, movementData.maxSpeed);
+
+            currentDriveDirection = Mathf.Sign(verticalInput);
+        }
+        else
+        {
+            currentSpeed -= movementData.deceleration * Time.fixedDeltaTime;
+            currentSpeed = Mathf.Clamp(currentSpeed, 0f, movementData.maxSpeed);
+        }
+
+        OnSpeedChange?.Invoke(currentSpeed);
+    }
+
+    private void RotateTank(Vector2 movementInput)
+    {
+        rb.MoveRotation(rb.rotation + movementInput.x * movementData.rotationSpeed * Time.fixedDeltaTime);
+    }
+
+    private void FixedUpdate()
+    {
+       
+        UpdateSpeed(movementVector);
+        RotateTank(movementVector);
+        Vector2 velocity = (Vector2)transform.up * currentSpeed * currentDriveDirection;
+        velocity = ClampTankMovemnt(velocity);
+
+        rb.velocity = velocity;
+    }
+
+
+    public Vector2 ClampTankMovemnt(Vector2 velocity)
+    {
+        // If bounds haven't been set up yet, skip clamping entirely so it doesn't trap the tank at (0,0)
+        if (min == Vector2.zero && max == Vector2.zero)
+        {
+            return velocity;
+        }
+
+        var nextposition = rb.position + velocity * Time.fixedDeltaTime;
+        nextposition.x = Mathf.Clamp(nextposition.x, min.x, max.x);
+        nextposition.y = Mathf.Clamp(nextposition.y, min.y, max.y);
+        Vector2 allowedVelocity = (nextposition - rb.position) / Time.fixedDeltaTime;
+        return allowedVelocity;
+    }
+
+
+
+
+
+}
+
+
+--- Assets/Scripts\GamePlay\Tank\WeaponTurret.cs ---
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+
+
+[RequireComponent(typeof(ObjectPool))]
+public class WeaponTurret : MonoBehaviour
+{
+
+    private TankController tankController;
+
+
+    private AimTurret aimTurret;
+
+    public List<Transform> turretBarrels;
+    public TurretData turretData;
+
+
+    private bool canShoot = true;
+    private Collider2D[] tankColliders;
+    private float currentDelay = 0;
+
+    private ObjectPool bulletPool;
+    [SerializeField]
+    private int bulletPoolCount = 10;
+
+
+    public event Action OnShoot, OnCanShoot;
+    public event Action<float> OnReloading;
+
+
+
+    private void Awake()
+    {
+
+        tankColliders = GetComponentsInParent<Collider2D>();
+
+        aimTurret = GetComponentInParent<AimTurret>();
+        bulletPool = GetComponent<ObjectPool>();
+
+
+        tankController = GetComponentInParent<TankController>();
+
+        if (tankController == null)
+        {
+            Debug.LogError("TankController is not found in parent.");
+            enabled = false;
+            return;
+        }
+
+        if (turretData.bulletPrefab == null)
+        {
+            Debug.LogError("Bullet Prefab is not assigned.");
+            enabled = false;
+            return;
+        }
+    }
+
+    private void Start()
+    {
+        bulletPool.Initialize(turretData.bulletPrefab, bulletPoolCount);
+        OnReloading?.Invoke(currentDelay);
+    }
+
+
+
+
+    public void Fire()
+    {
+
+
+        if (canShoot)
+        {
+
+            canShoot = false;
+            currentDelay = turretData.reloadDelay;
+
+            foreach (var barrel in turretBarrels)
+            {
+
+
+                GameObject bullet = bulletPool.CreateObject();
+
+
+
+                bullet.transform.position = barrel.position;
+                bullet.transform.rotation = barrel.rotation;
+
+                bullet.GetComponent<Bullet>().Initialize();
+
+                foreach (var colllider in tankColliders)
+                {
+                    Physics2D.IgnoreCollision(bullet.GetComponent<Collider2D>(), colllider);
+                }
+            }
+
+            OnShoot?.Invoke();
+
+            OnReloading?.Invoke(currentDelay);
+        }
+        else
+        {
+            OnCanShoot?.Invoke();
+        }
+
+    }
+
+    private void Update()
+    {
+
+        Reload();
+    }
+
+    private void Reload()
+    {
+        if (!canShoot)
+        {
+            currentDelay -= Time.deltaTime;
+
+
+
+            OnReloading?.Invoke(currentDelay / turretData.reloadDelay);
+
+            if (currentDelay <= 0)
+            {
+                currentDelay = 0;
+                canShoot = true;
+
+
+            }
+        }
+    }
+
+
+
+}
+
+
+--- Assets/Scripts\Presentation\BulletImpactFeedback.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BulletImpactFeedback : MonoBehaviour
+{
+    [SerializeField] private Bullet bullet;
+    [SerializeField] private InstantiateUtli instantiateUtil;
+
+    private void OnEnable()
+    {
+        bullet.OnHit += HandleHit;
+    }
+
+    private void OnDisable()
+    {
+        bullet.OnHit -= HandleHit;
+    }
+
+    private void HandleHit()
+    {
+        instantiateUtil.InstantiateObject(bullet.transform.position);
+    }
+}
+
+
+--- Assets/Scripts\Presentation\ContinueButtonListner.cs ---
+using UnityEngine;
+using UnityEngine.UI;
+
+[RequireComponent(typeof(Button))]
+public class ContinueButtonListner : MonoBehaviour
+{
+    [SerializeField] private SaveSystem saveSystem;
+
+    private Button btn;
+
+    private void Awake()
+    {
+        btn = GetComponent<Button>();
+
+        // Until SaveSystem tells us whether a save exists,
+        // don't allow interaction.
+        btn.interactable = false;
+    }
+
+    private void OnEnable()
+    {
+        if (saveSystem != null)
+        {
+            saveSystem.OnDataLoadedResult += HandleDataLoadedResult;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (saveSystem != null)
+        {
+            saveSystem.OnDataLoadedResult -= HandleDataLoadedResult;
+        }
+    }
+
+    private void HandleDataLoadedResult(bool hasSaveData)
+    {
+        btn.interactable = hasSaveData;
+    }
+}
+
+--- Assets/Scripts\Presentation\DeathFeedback.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+
+
+public class DeathFeedback : MonoBehaviour
+{
+    [SerializeField] private GameObject deathEffect;
+
+    [SerializeField]
+    private Damagable damagable;
+
+    
+
+    private void OnEnable()
+    {
+        if (damagable != null)
+        {
+            damagable.OnDeath += PlayDeathFeedback;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (damagable != null)
+        {
+            damagable.OnDeath -= PlayDeathFeedback;
+        }
+    }
+
+    private void PlayDeathFeedback()
+    {
+
+        
+
+        GameObject effect = Instantiate(
+            deathEffect,
+            transform.position,
+            Quaternion.identity
+        );
+
+        
+
+        Animator animator = effect.GetComponentInChildren<Animator>();
+
+        if (animator == null)
+        {
+            Debug.LogError("PLAYER DEATH EFFECT HAS NO ANIMATOR");
+            return;
+        }
+
+        
+    }
+}
+
+
+
+--- Assets/Scripts\Presentation\DestroyOnAudioFinished.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class DestroyOnAudioFinished : MonoBehaviour
+{
+    AudioSource audioSource;
+
+    private void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+    }
+    private void Start()
+    {
+        StartCoroutine(WaitCoroutine());
+    }
+
+    IEnumerator WaitCoroutine()
+    {
+        yield return new WaitForSeconds(audioSource.clip.length);
+        Destroy(gameObject);
+    }
+}
+
+
+--- Assets/Scripts\Presentation\EngineAudio.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class EngineAudio : MonoBehaviour
+{
+    [SerializeField]
+    private TankMovement tankMovement;
+
+    [SerializeField]
+    private AudioSource audioSource;
+
+    public float minVolume = 0.05f;
+    public float maxVolume   = 0.1f;
+    public float volumeIncrease = 0.01f;
+
+    [SerializeField]
+    private float currentVolume;
+
+    private void OnEnable()
+    {
+        tankMovement.OnSpeedChange += ControlEngineVolume;
+    }
+
+    private void OnDisable()
+    {
+        tankMovement.OnSpeedChange -= ControlEngineVolume;
+    }
+
+    private void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+        currentVolume = minVolume;
+    }
+
+    // Update is called once per frame
+    void Start()
+    {
+        audioSource.volume = currentVolume;
+    }
+
+    private void ControlEngineVolume(float speed)
+    {
+        if(speed > 0)
+        {
+            if(currentVolume < maxVolume)
+            {
+                currentVolume += volumeIncrease * Time.deltaTime;
+               
+            }
+        }
+
+        else
+        {
+            if(currentVolume > minVolume)
+            {
+                currentVolume -= volumeIncrease * Time.deltaTime;
+            }
+        }
+
+        currentVolume = Mathf.Clamp(currentVolume, minVolume, maxVolume);
+        audioSource.volume = currentVolume;
+    }
+}
+
+
+--- Assets/Scripts\Presentation\HealthBarOnDamageAppear.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class HealthBarOnDamageAppear : MonoBehaviour
+{
+    [SerializeField]
+   private Damagable damagable;
+    [SerializeField]
+    private GameObject healthCanvasGameObject;
+
+    private void OnEnable()
+    {
+        damagable.OnDamaged += ShowHealthBar;
+    }
+
+    private void OnDisable()
+    {
+        damagable.OnDamaged -= ShowHealthBar;
+    }
+
+    private void ShowHealthBar()
+    {
+        
+        healthCanvasGameObject.SetActive(true);
+    }
+}
+
+
+--- Assets/Scripts\Presentation\HealthBarUIListner.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class HealthBarUIListner : MonoBehaviour
+{
+    [SerializeField] private Slider healthBar;
+
+    [SerializeField]
+    private Damagable damagable;
+
+    private void OnEnable()
+    {
+
+        if (damagable != null)
+        {
+            damagable.OnHealthChanged += UpdateHealthBar;
+
+
+        }
+    }
+    private void Start()
+    {
+        if (damagable != null)
+        {
+            UpdateHealthBar(
+                (float)damagable.CurrentHealth / damagable.maxHealth
+            );
+
+        }
+    }
+
+
+private void OnDisable()
+    {
+        if (damagable != null)
+        {
+            damagable.OnHealthChanged -= UpdateHealthBar;
+
+        }
+    }   
+
+
+    private void UpdateHealthBar(float healthPercentage)
+    { 
+        healthBar.value = healthPercentage;
+    }
+}
+
+
+--- Assets/Scripts\Presentation\InstantiateUtli.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+public class InstantiateUtli : MonoBehaviour
+{
+    public GameObject objectToInstantiate;
+
+   
+    public void InstantiateObject(Vector2 position)
+    {
+        Instantiate(
+       objectToInstantiate,
+       position,
+       Quaternion.identity
+   );
+    }
+}
+
+
+--- Assets/Scripts\Presentation\MuzzelFlash.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class MuzzelFlash : MonoBehaviour
+{
+    [SerializeField]
+    private WeaponTurret turret;
+    [SerializeField]
+    private Animator animator;
+
+
+    private void Awake()
+    {
+        turret = GetComponentInParent<WeaponTurret>();
+        turret.OnShoot += MuzzelFlashEffect;
+
+    }
+
+
+    private void OnDestroy()
+    {
+        if (turret != null)
+        {
+            turret.OnShoot -= MuzzelFlashEffect;
+        }
+    }
+
+    private void MuzzelFlashEffect()
+    {
+        
+
+        animator.enabled = true;
+        animator.Play("MuzzelFlash Animation", 0, 0f);
+
+       
+
+    }
+}
+
+
+--- Assets/Scripts\Presentation\ObjectGeneratorRandomPositionUtil.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEngine;
+
+public class ObjectGeneratorRandomPositionUtil : MonoBehaviour
+{
+    public GameObject objectPrefab;
+
+    public float radius = 0.2f;
+
+    [SerializeField]
+    private Bullet bullet;
+
+    
+
+    private void OnEnable()
+    {
+        bullet.OnHit += CreateObject;
+    }
+    private void OnDisable()
+    {
+        bullet.OnHit -= CreateObject;
+    }
+
+    protected Vector2 GetRandomPosition()
+    {
+        return Random.insideUnitCircle * radius + (Vector2)transform.position;
+    }
+
+    protected Quaternion Random2DRotation()
+    {
+        return Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
+    }
+
+    public void CreateObject()
+    {
+        Vector2 positoin = GetRandomPosition();
+        GameObject impactObject = GetObject();
+        impactObject.transform.position = positoin;
+        impactObject.transform.rotation = Random2DRotation();
+    }
+
+    protected virtual GameObject GetObject()
+    {
+        return Instantiate(objectPrefab);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, radius);
+    }
+}
+
+
+--- Assets/Scripts\Presentation\ReloadUIListner.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class ReloadUIListner : MonoBehaviour
+{
+    [SerializeField]
+    private Slider reloadSlider;
+
+    [SerializeField]
+    private WeaponTurret weaponTurret;
+
+    private void OnEnable()
+    {
+        if (weaponTurret != null)
+        {
+            weaponTurret.OnReloading += UpdateReloadSlider;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (weaponTurret != null)
+        {
+            weaponTurret.OnReloading -= UpdateReloadSlider;
+        }
+    }
+
+    private void UpdateReloadSlider(float reloadPercentage)
+    {
+        reloadSlider.value = reloadPercentage;
+    }
+
+}
+
+
+--- Assets/Scripts\Presentation\SoundFeedback.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class SoundFeedback : MonoBehaviour
+{
+    [SerializeField]
+    private WeaponTurret turret;
+    [SerializeField]
+    private AudioSource audioSource;
+
+    private void Awake()
+    {
+        turret = GetComponentInParent<WeaponTurret>();
+        audioSource = GetComponent<AudioSource>();
+    }
+
+    private void OnEnable()
+    {
+        turret.OnShoot += PlayShootSound;
+    }
+
+    private void OnDisable()
+    {
+        turret.OnShoot -= PlayShootSound;
+    }
+
+    private void PlayShootSound()
+    {
+        audioSource.Play();
+    }
+}
+
+
+--- Assets/Scripts\Presentation\TrackMarkSpawner.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class TrackMarkSpawner : MonoBehaviour
+{
+    private Vector2 lastPosition;
+    public float trackDistance = 0.2f;
+    public GameObject trackMarkPrefab;
+    public int objectPoolSize = 50;
+
+    private ObjectPool objectPool;
+
+    private void Awake()
+    {
+        objectPool = GetComponent<ObjectPool>();
+       
+    }
+
+    private void Start()
+    {
+        lastPosition = transform.position;
+        objectPool.Initialize(trackMarkPrefab, objectPoolSize);
+    }
+
+    private void Update()
+    {
+        var distanceDriven = Vector2.Distance(transform.position, lastPosition);
+        if(distanceDriven >= trackDistance)
+        {
+            lastPosition = transform.position;
+            var tracks = objectPool.CreateObject();
+            tracks.transform.position = transform.position;
+            tracks.transform.rotation = transform.rotation;
+        }
+    }
+
+}
+
+
+--- Assets/Scripts\Presentation\UIFollowTank.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class UIFollowTank : MonoBehaviour
+{
+    public Transform objectToFollow;
+    [SerializeField]
+    RectTransform rectTransform;
+
+    private void Awake()
+    {
+        rectTransform = GetComponent<RectTransform>();
+    }
+
+    private void Update()
+    {
+        if(objectToFollow != null)
+        {
+            rectTransform.anchoredPosition = objectToFollow.localPosition;
+        }
+    }
+}
+
+

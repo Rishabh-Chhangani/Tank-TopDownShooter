@@ -575,7 +575,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deathEffect: {fileID: 6570482696049056718, guid: 3070a7ac74df09445bb74907a4bc7739, type: 3}
-  damagable: {fileID: 8678535190004980579}
+  damageable: {fileID: 8678535190004980579}
 --- !u!114 &6709928016796687102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -602,7 +602,7 @@ GameObject:
   - component: {fileID: 782016630887057275}
   - component: {fileID: 6756555828063455257}
   m_Layer: 7
-  m_Name: MuzzelFlash
+  m_Name: MuzzleFlash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

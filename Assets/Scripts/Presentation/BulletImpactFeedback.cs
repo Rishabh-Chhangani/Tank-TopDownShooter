@@ -5,7 +5,7 @@ using UnityEngine;
 public class BulletImpactFeedback : MonoBehaviour
 {
     [SerializeField] private Bullet bullet;
-    [SerializeField] private InstantiateUtli instantiateUtil;
+    [SerializeField] private InstantiateUtil instantiateUtil;
 
     private void OnEnable()
     {

@@ -56,12 +56,7 @@ public class EnemySpawner : MonoBehaviour
         TankController tank = enemy.GetComponentInChildren<TankController>();
         Rigidbody2D rb = tank.GetComponent<Rigidbody2D>();
 
-        Debug.Log(
-            $"Enemy World: {enemy.transform.position}\n" +
-            $"Tank Local: {tank.transform.localPosition}\n" +
-            $"Tank World: {tank.transform.position}\n" +
-            $"Rigidbody World: {rb.position}"
-                    );  
+       
 
         if (enemyParent != null)
         {

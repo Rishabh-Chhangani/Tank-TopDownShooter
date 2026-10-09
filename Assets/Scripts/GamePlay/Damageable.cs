@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-public class Damagable : MonoBehaviour
+public class Damageable : MonoBehaviour
 {
     [SerializeField] private int currentHealth = 0;
 
@@ -17,9 +17,7 @@ public class Damagable : MonoBehaviour
     private void Awake()
     {
         if (currentHealth == 0)
-        {
             currentHealth = maxHealth;
-        }
 
         rootEntity = transform.root;
     }
@@ -30,55 +28,38 @@ public class Damagable : MonoBehaviour
         {
             return currentHealth;
         }
+        
 
         set
         {
             currentHealth = value;
 
-            currentHealth = Mathf.Clamp(
-                currentHealth,
-                0,
-                maxHealth
-            );
+            currentHealth = Mathf.Clamp(currentHealth,0,maxHealth);
 
-            OnHealthChanged?.Invoke(
-                (float)currentHealth / maxHealth
-            );
+            OnHealthChanged?.Invoke((float)currentHealth / maxHealth);
         }
     }
 
     public void TakeDamage(int damagePoints)
     {
         if (isDead)
-        {
             return;
-        }
-
+        
         CurrentHealth -= damagePoints;
 
         if (currentHealth <= 0)
-        {
             Die();
-        }
         else
-        {
             OnDamaged?.Invoke();
-
-            Debug.Log(currentHealth);
-        }
     }
 
     public void Die()
     {
         if (isDead)
-        {
             return;
-        }
-
+        
         isDead = true;
-
-        Debug.Log("Damagable.Die() CALLED");
-
+        
         OnDeath?.Invoke();
 
         Destroy(rootEntity.gameObject);

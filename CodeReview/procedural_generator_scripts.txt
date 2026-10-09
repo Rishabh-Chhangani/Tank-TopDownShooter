@@ -1,0 +1,263 @@
+--- Assets\Editor\CompileTimeTracker.cs ---
+using UnityEditor;
+using UnityEngine;
+
+[InitializeOnLoad]
+public static class CompileTimeTracker
+{
+    private const string StartTimeKey = "CompileTimeTracker.StartTime";
+
+    static CompileTimeTracker()
+    {
+        EditorApplication.update += TrackCompilation;
+    }
+
+    private static void TrackCompilation()
+    {
+        if (EditorApplication.isCompiling)
+        {
+            if (!EditorPrefs.HasKey(StartTimeKey))
+            {
+                EditorPrefs.SetString(
+                    StartTimeKey,
+                    EditorApplication.timeSinceStartup.ToString("R")
+                );
+
+                Debug.Log("Compilation started.");
+            }
+        }
+        else if (EditorPrefs.HasKey(StartTimeKey))
+        {
+            double startTime = double.Parse(
+                EditorPrefs.GetString(StartTimeKey)
+            );
+
+            double finishTime = EditorApplication.timeSinceStartup;
+            double compileTime = finishTime - startTime;
+
+            EditorPrefs.DeleteKey(StartTimeKey);
+
+            Debug.Log(
+                $"Script compilation time: {compileTime:F3} seconds"
+            );
+        }
+    }
+}
+
+--- Assets\Editor\PreBuildTimeRecorder.cs ---
+//using System.IO;
+//using System.Collections.Generic;
+//using UnityEditor;
+//using UnityEngine;
+
+//public class PreBuildTimeRecorder : UnityEditor.Build.ICustomBuildPreprocessor
+//{
+//    private static string buildInfoFilePath = "Assets/BuildInfo.txt";
+
+//    // Automatic call before a build starts
+//    public void OnPreprocessBuild(UnityEditor.Build.BuildReport report)
+//    {
+//        RecordBuildTime();
+//    }
+
+//    private static void RecordBuildTime()
+//    {
+//        // Get current date and time
+//        string buildTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+//        string content = $"Pre-Build Time: {buildTime}";
+
+//        // Optionally append OS/target info for tracking
+//        content += $"Target Platform: {EditorUserBuildSettings.activeBuildTarget}";
+
+//        // Write or overwrite the build info file
+//        File.WriteAllText(buildInfoFilePath, content);
+
+//        // Refresh AssetDatabase so the file shows in Unity immediately
+//        AssetDatabase.Refresh();
+//        Debug.Log("Pre-build time recorded to " + buildInfoFilePath);
+//    }
+
+//    // Optional: Add a manual menu item to record build time anytime
+//    [MenuItem("Build/Record Pre-Build Time")]
+//    public static void RecordTimeManually()
+//    {
+//        RecordBuildTime();
+//    }
+//}
+
+
+--- Assets\Editor\RandomMapGeneratorEditor.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
+
+
+[CustomEditor(typeof(AbstractMapGenrator),true)]
+public class RandomMapGeneratorEditor : Editor
+{
+    AbstractMapGenrator generator;
+
+
+    private void Awake()
+    {
+        generator = (AbstractMapGenrator)target;
+    }
+
+
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+        if (GUILayout.Button("Generate Map"))
+        {
+            generator.GenerateMap();
+        }
+    }
+}
+
+
+--- Assets\Scripts\GamePlay\_Scripts\AbstractMapGenrator.cs ---
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public abstract class AbstractMapGenrator : MonoBehaviour
+{
+    [SerializeField] protected TileMapVisualizer tileMapVisualizer = null;
+    [SerializeField] protected Vector2Int startPosition = Vector2Int.zero;
+    public void GenerateMap()
+    {
+        tileMapVisualizer.Clear();
+        RunProceduralGeneration();
+    }
+    protected abstract void RunProceduralGeneration();
+}
+
+
+--- Assets\Scripts\GamePlay\_Scripts\ProceduralGenrationAlgorithms.cs ---
+using System.Collections.Generic;
+using UnityEngine;
+
+public static class ProceduralGenrationAlgorithms 
+{
+    public static HashSet<Vector2Int> SimpleRandomWalk(Vector2Int startPosition , int walkLength)
+    {
+        HashSet<Vector2Int> path = new HashSet<Vector2Int>();
+
+        path.Add(startPosition);
+        var previousPostion = startPosition;
+
+        for (int i = 0; i < walkLength; i++)
+        {
+            var newPosition = previousPostion + Direction2D.GetRandomCardinalDirection();
+            path.Add(newPosition);
+            previousPostion = newPosition;
+        }
+        return path;
+    }
+}
+
+
+public static class Direction2D
+{
+    public static List<Vector2Int> cardinalDirectionList = new List<Vector2Int>
+    {
+        new Vector2Int(0,1), // Up
+        new Vector2Int(1,0), // Right
+        new Vector2Int(0,-1), // Down
+        new Vector2Int(-1,0) // Left
+    };
+    public static Vector2Int GetRandomCardinalDirection() => cardinalDirectionList[Random.Range(0, cardinalDirectionList.Count)];
+    
+}
+
+--- Assets\Scripts\GamePlay\_Scripts\SimpleRandomMapGenrator.cs ---
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+public class SimpleRandomMapGenrator: AbstractMapGenrator
+{
+    [SerializeField] protected SimplerandomWalkSO simplerandomWalkSO;
+    
+    protected override void RunProceduralGeneration()
+    {
+        HashSet<Vector2Int> floorPositions = RunRandomWalk();
+        tileMapVisualizer.Clear();
+        tileMapVisualizer.PaintFloortile(floorPositions);
+    }
+
+    protected HashSet<Vector2Int> RunRandomWalk()
+    {
+
+        var currentPosition = startPosition;
+        HashSet<Vector2Int> floorPositions = new HashSet<Vector2Int>();
+
+        for (int i = 0; i < simplerandomWalkSO.iteration; i++)
+        {
+            var path = ProceduralGenrationAlgorithms.SimpleRandomWalk(currentPosition, simplerandomWalkSO.walkLength);
+            floorPositions.UnionWith(path);
+            if (simplerandomWalkSO.startRandomlyEachIteration)
+                currentPosition = floorPositions.ElementAt(UnityEngine.Random.Range(0, floorPositions.Count));
+        }
+        return floorPositions;
+    }
+}
+
+
+--- Assets\Scripts\GamePlay\_Scripts\TileMapVisualizer.cs ---
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Tilemaps;
+
+public class TileMapVisualizer : MonoBehaviour
+{
+    [SerializeField] private Tilemap floorTileMap;
+
+    [SerializeField] private TileBase floorTile;
+
+
+    public void PaintFloortile(IEnumerable<Vector2Int> floorPositions)
+    {
+        PaintTiles(floorPositions, floorTileMap, floorTile);
+    }
+
+    private void PaintTiles(IEnumerable<Vector2Int> positions, Tilemap tileMap, TileBase tile)
+    {
+        foreach (var position in positions)
+        {
+            PaintSingleTile(tileMap, tile, position);
+        }
+    }
+
+    private void PaintSingleTile(Tilemap tileMap, TileBase tile, Vector2Int position)
+    {
+        var tilePosition = tileMap.WorldToCell((Vector3Int)position);
+        tileMap.SetTile(tilePosition,tile);
+    }
+
+    public void Clear()
+    {
+        floorTileMap.ClearAllTiles();
+    }
+
+}
+
+
+--- Assets\Scripts\GamePlay\_Scripts\Data\SimplerandomWalkSO.cs ---
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+
+[CreateAssetMenu(fileName = "SimpleRandomWalkSO_", menuName = "PCG/SimpleRandomWalkData")]
+public class SimplerandomWalkSO : ScriptableObject
+{
+    public int iteration = 10, walkLength = 10;
+    public bool startRandomlyEachIteration = true;
+}
+
+

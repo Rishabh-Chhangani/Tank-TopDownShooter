@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ReloadUIListner : MonoBehaviour
+public class ReloadUIListener : MonoBehaviour
 {
     [SerializeField]
     private Slider reloadSlider;

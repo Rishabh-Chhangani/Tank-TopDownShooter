@@ -117,13 +117,7 @@ public class AIDetector : MonoBehaviour
                 transform.position,
                 collision.transform.position);
 
-            Debug.Log(
-                $"DETECTION | Detector: {transform.position} | " +
-                $"Collider: {collision.name} | " +
-                $"Collider Position: {collision.transform.position} | " +
-                $"Distance: {distance} | " +
-                $"View Radius: {viewRadius}"
-            );
+            
 
             Target = collision.transform;
         }

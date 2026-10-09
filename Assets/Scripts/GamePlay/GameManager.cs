@@ -16,7 +16,7 @@ public class GameManager : MonoBehaviour
 
     private void Initialized(Scene scene, LoadSceneMode sceneMode)
     {
-        Debug.Log("Loaded GM");
+       
         var playerInput = FindAnyObjectByType<PlayerInputHandler>();
         if (playerInput != null)
         {
@@ -25,8 +25,8 @@ public class GameManager : MonoBehaviour
         saveSystem = FindObjectOfType<SaveSystem>();
         if( player != null && saveSystem.LoadedData != null)
         {
-            var damagable = player.GetComponentInChildren<Damagable>();
-            damagable.CurrentHealth = saveSystem.LoadedData.playerHealth;
+            var damageable = player.GetComponentInChildren<Damageable>();
+            damageable.CurrentHealth = saveSystem.LoadedData.playerHealth;
 
         }
     }
@@ -49,7 +49,7 @@ public class GameManager : MonoBehaviour
     public void SaveData()
     {
         if (player != null)
-            saveSystem.SaveData(SceneManager.GetActiveScene().buildIndex + 1, player.GetComponentInChildren<Damagable>().CurrentHealth);
+            saveSystem.SaveData(SceneManager.GetActiveScene().buildIndex + 1, player.GetComponentInChildren<Damageable>().CurrentHealth);
 
     }
 }
