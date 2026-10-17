@@ -8,7 +8,7 @@ public class Bullet : MonoBehaviour
     public BulletData bulletData;
 
     private Vector2 startPosition;
-    private float conquerDistance = 0;
+    private float maxDistanceSqr = 0f;
 
     public event Action OnHit;
 
@@ -19,8 +19,7 @@ public class Bullet : MonoBehaviour
 
     private void Update()
     {
-        conquerDistance = Vector2.Distance(transform.position, startPosition);
-        if(conquerDistance >= bulletData.maxDistance)
+        if (((Vector2)transform.position - startPosition).sqrMagnitude >= maxDistanceSqr)
         {
             DisableBullet();
         }
@@ -30,14 +29,13 @@ public class Bullet : MonoBehaviour
     {
         rb2d.velocity = Vector2.zero;
         gameObject.SetActive(false);
-
     }
 
     public void Initialize()
     {
         startPosition = transform.position;
-        rb2d.velocity = transform.up * bulletData.speed;
-       
+        maxDistanceSqr = bulletData != null ? bulletData.maxDistance * bulletData.maxDistance : 0f;
+        rb2d.velocity = transform.up * (bulletData != null ? bulletData.speed : 0f);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)

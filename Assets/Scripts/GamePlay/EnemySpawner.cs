@@ -7,28 +7,33 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private List<SpawnPoint> _availableSpawnPoints;
     [SerializeField] private GameObject enemyPrefab;
 
-    private Transform enemyParent;
+    [SerializeField] private Transform enemyParent;
 
     private void Awake()
     {
-        _allSpawnPoints = new List<SpawnPoint>(
-            FindObjectsOfType<SpawnPoint>()
-        );
+        if (_allSpawnPoints == null || _allSpawnPoints.Count == 0)
+        {
+            _allSpawnPoints = new List<SpawnPoint>(
+                FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None)
+            );
+        }
 
         _availableSpawnPoints = new List<SpawnPoint>(_allSpawnPoints);
     }
 
     private void Start()
     {
-        GameObject enemyParentObject = GameObject.Find("Enemies");
-
-        if (enemyParentObject != null)
+        if (enemyParent == null)
         {
-            enemyParent = enemyParentObject.transform;
-        }
-        else
-        {
-            Debug.LogWarning("Enemy Parent not found in scene");
+            GameObject enemyParentObject = GameObject.Find("Enemies");
+            if (enemyParentObject != null)
+            {
+                enemyParent = enemyParentObject.transform;
+            }
+            else
+            {
+                enemyParent = new GameObject("Enemies").transform;
+            }
         }
     }
 

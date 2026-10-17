@@ -1,13 +1,11 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class PatrolPath : MonoBehaviour
 {
     public List<Transform> patrolPoints = new List<Transform>();
 
-    public int Length { get => patrolPoints.Count; }
+    public int Length { get => patrolPoints != null ? patrolPoints.Count : 0; }
 
     [Header("Gizmo paramenters")]
     public Color pointsColor = Color.blue;
@@ -22,37 +20,49 @@ public class PatrolPath : MonoBehaviour
 
     public PathPoint GetClosestPathPoint(Vector2 tankPosition)
     {
-        var minDistance = float.MaxValue;
-        var index = 1;
-        for(int i = 0; i< patrolPoints.Count; i++)
+        if (patrolPoints == null || patrolPoints.Count == 0)
         {
-            var tempDistance = Vector2.Distance(tankPosition, patrolPoints[i].position);
-            if(tempDistance < minDistance)
-            {
-                minDistance = tempDistance;
-                index = i;
-            }
-        
+            return new PathPoint { Index = -1, Position = tankPosition };
         }
 
-        return new PathPoint {  Index = index, Position = patrolPoints[index].position };   
-    }
+        var minSqrDistance = float.MaxValue;
+        var index = 0;
+        for (int i = 0; i < patrolPoints.Count; i++)
+        {
+            if (patrolPoints[i] == null) continue;
 
+            var tempSqrDistance = (tankPosition - (Vector2)patrolPoints[i].position).sqrMagnitude;
+            if (tempSqrDistance < minSqrDistance)
+            {
+                minSqrDistance = tempSqrDistance;
+                index = i;
+            }
+        }
+
+        Vector2 pos = patrolPoints[index] != null ? (Vector2)patrolPoints[index].position : tankPosition;
+        return new PathPoint { Index = index, Position = pos };
+    }
 
     public PathPoint GetNextPathPoint(int index)
     {
-        var newIndex = index + 1 >= patrolPoints.Count ? 0 : index + 1;
-        return new PathPoint { Index = newIndex, Position = patrolPoints[newIndex].position };
+        if (patrolPoints == null || patrolPoints.Count == 0)
+        {
+            return new PathPoint { Index = -1, Position = Vector2.zero };
+        }
+
+        var newIndex = (index + 1) % patrolPoints.Count;
+        Vector2 pos = patrolPoints[newIndex] != null ? (Vector2)patrolPoints[newIndex].position : Vector2.zero;
+        return new PathPoint { Index = newIndex, Position = pos };
     }
     private void OnDrawGizmos()
     {
-        if(patrolPoints.Count == 0)
+        if (patrolPoints == null || patrolPoints.Count == 0)
             return;
-        for(int i = patrolPoints.Count-1; i >= 0; i--)
+        for (int i = patrolPoints.Count - 1; i >= 0; i--)
         {
-            if(i == -1 || patrolPoints[i] == null)
+            if (patrolPoints[i] == null)
             {
-                return;
+                continue;
             }
             Gizmos.color = pointsColor;
             Gizmos.DrawSphere(patrolPoints[i].position, pointSize);

@@ -16,6 +16,8 @@ public class AIPatrolPathBehaviour : AIBehaviour
     [SerializeField]
     private bool isWaiting = false;
 
+    private float currentWaitTimer = 0f;
+
     [SerializeField]
     private Vector2 currentPatrolTarget = Vector2.zero;
 
@@ -45,34 +47,44 @@ public class AIPatrolPathBehaviour : AIBehaviour
         if (patrolPath.Length < 2)
             return;
 
-        if (!isWaiting)
+        if (isWaiting)
         {
-            if (!isInitialized)
+            tank.HandleTankMovement(Vector2.zero);
+            currentWaitTimer -= Time.deltaTime;
+            if (currentWaitTimer <= 0f)
             {
-                PatrolPath.PathPoint currentPathPoint =
-                    patrolPath.GetClosestPathPoint(
-                        tank.transform.position);
+                PatrolPath.PathPoint nextPathPoint =
+                    patrolPath.GetNextPathPoint(currentIndex);
 
-                currentIndex =
-                    currentPathPoint.Index;
-
-                currentPatrolTarget =
-                    currentPathPoint.Position;
-
-                isInitialized = true;
+                currentPatrolTarget = nextPathPoint.Position;
+                currentIndex = nextPathPoint.Index;
+                isWaiting = false;
             }
+            return;
+        }
 
-            if (Vector2.Distance(
-                    tank.transform.position,
-                    currentPatrolTarget) < arriveDistance)
-            {
-                isWaiting = true;
+        if (!isInitialized)
+        {
+            PatrolPath.PathPoint currentPathPoint =
+                patrolPath.GetClosestPathPoint(
+                    tank.transform.position);
 
-                StartCoroutine(
-                    WaitCoroutine());
+            currentIndex =
+                currentPathPoint.Index;
 
-                return;
-            }
+            currentPatrolTarget =
+                currentPathPoint.Position;
+
+            isInitialized = true;
+        }
+
+        float sqrArriveDistance = arriveDistance * arriveDistance;
+        if (((Vector2)tank.transform.position - currentPatrolTarget).sqrMagnitude < sqrArriveDistance)
+        {
+            tank.HandleTankMovement(Vector2.zero);
+            isWaiting = true;
+            currentWaitTimer = waitTime;
+            return;
         }
 
         Vector2 directionToGo =
@@ -112,23 +124,5 @@ public class AIPatrolPathBehaviour : AIBehaviour
             tank.HandleTankMovement(
                 Vector2.up);
         }
-    }
-
-    private IEnumerator WaitCoroutine()
-    {
-        yield return new WaitForSeconds(
-            waitTime);
-
-        PatrolPath.PathPoint nextPathPoint =
-            patrolPath.GetNextPathPoint(
-                currentIndex);
-
-        currentPatrolTarget =
-            nextPathPoint.Position;
-
-        currentIndex =
-            nextPathPoint.Index;
-
-        isWaiting = false;
     }
 }

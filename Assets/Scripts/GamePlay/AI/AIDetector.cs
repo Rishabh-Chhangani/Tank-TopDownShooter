@@ -33,16 +33,16 @@ public class AIDetector : MonoBehaviour
         }
     }
 
+    private readonly Collider2D[] overlapResults = new Collider2D[1];
+    private readonly RaycastHit2D[] raycastHits = new RaycastHit2D[1];
+
     public bool IsTargetInShootingRange(Transform shooter)
     {
         if (Target == null || shooter == null)
             return false;
 
-        float distance = Vector2.Distance(
-            shooter.position,
-            Target.position);
-
-        return distance <= shootingRange;
+        float sqrDistance = ((Vector2)shooter.position - (Vector2)Target.position).sqrMagnitude;
+        return sqrDistance <= shootingRange * shootingRange;
     }
 
     public float ShootingRange => shootingRange;
@@ -62,19 +62,18 @@ public class AIDetector : MonoBehaviour
 
     private bool CheckTargetVisible()
     {
-        Vector2 direction =
-            Target.position - transform.position;
+        Vector2 direction = Target.position - transform.position;
 
-        RaycastHit2D result = Physics2D.Raycast(
+        int hitCount = Physics2D.RaycastNonAlloc(
             transform.position,
             direction,
+            raycastHits,
             viewRadius,
             visibilityLayer);
 
-        if (result.collider != null)
+        if (hitCount > 0 && raycastHits[0].collider != null)
         {
-            return (playerLayerMask &
-                    (1 << result.collider.gameObject.layer)) != 0;
+            return (playerLayerMask & (1 << raycastHits[0].collider.gameObject.layer)) != 0;
         }
 
         return false;
@@ -94,11 +93,14 @@ public class AIDetector : MonoBehaviour
 
     private void DetectIfOutOfRange()
     {
-        if (Target == null ||
-            !Target.gameObject.activeSelf ||
-            Vector2.Distance(
-                transform.position,
-                Target.position) > viewRadius + 1f)
+        if (Target == null || !Target.gameObject.activeSelf)
+        {
+            Target = null;
+            return;
+        }
+
+        float maxRange = viewRadius + 1f;
+        if (((Vector2)transform.position - (Vector2)Target.position).sqrMagnitude > maxRange * maxRange)
         {
             Target = null;
         }
@@ -106,31 +108,25 @@ public class AIDetector : MonoBehaviour
 
     private void CheckIfPlayerInRange()
     {
-        Collider2D collision = Physics2D.OverlapCircle(
+        int hitCount = Physics2D.OverlapCircleNonAlloc(
             transform.position,
             viewRadius,
+            overlapResults,
             playerLayerMask);
 
-        if (collision != null)
+        if (hitCount > 0 && overlapResults[0] != null)
         {
-            float distance = Vector2.Distance(
-                transform.position,
-                collision.transform.position);
-
-            
-
-            Target = collision.transform;
+            Target = overlapResults[0].transform;
         }
     }
 
     private IEnumerator DetectionCoroutine()
     {
+        var wait = new WaitForSeconds(detectionCheckDelay);
         while (true)
         {
             DetectTarget();
-
-            yield return new WaitForSeconds(
-                detectionCheckDelay);
+            yield return wait;
         }
     }
 

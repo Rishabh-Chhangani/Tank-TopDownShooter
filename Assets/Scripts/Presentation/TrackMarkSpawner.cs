@@ -6,6 +6,7 @@ public class TrackMarkSpawner : MonoBehaviour
 {
     private Vector2 lastPosition;
     public float trackDistance = 0.2f;
+    private float trackDistanceSqr;
     public GameObject trackMarkPrefab;
     public int objectPoolSize = 50;
 
@@ -14,19 +15,18 @@ public class TrackMarkSpawner : MonoBehaviour
     private void Awake()
     {
         objectPool = GetComponent<ObjectPool>();
-       
     }
 
     private void Start()
     {
         lastPosition = transform.position;
+        trackDistanceSqr = trackDistance * trackDistance;
         objectPool.Initialize(trackMarkPrefab, objectPoolSize);
     }
 
     private void Update()
     {
-        var distanceDriven = Vector2.Distance(transform.position, lastPosition);
-        if(distanceDriven >= trackDistance)
+        if (((Vector2)transform.position - lastPosition).sqrMagnitude >= trackDistanceSqr)
         {
             lastPosition = transform.position;
             var tracks = objectPool.CreateObject();
