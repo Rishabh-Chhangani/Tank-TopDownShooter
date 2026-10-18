@@ -12,9 +12,15 @@ public class WaveManager : MonoBehaviour
 
     private void Start()
     {
-        spawnManager.OnEnemyDestroyed += EnemyDestroyed;
-
-        StartCoroutine(WaveLoop());
+        if (spawnManager != null)
+        {
+            spawnManager.OnEnemyDestroyed += EnemyDestroyed;
+            StartCoroutine(WaveLoop());
+        }
+        else
+        {
+            Debug.LogError("SpawnManager is not assigned to WaveManager.", this);
+        }
     }
 
     private void OnDestroy()
@@ -31,15 +37,14 @@ public class WaveManager : MonoBehaviour
         {
             numberOfWaves++;
 
-            
-
             enemiesAlive = spawnManager.GetNumberOfEnemiesToSpawn();
 
             yield return StartCoroutine(spawnManager.ManageSpawn());
 
-            yield return new WaitUntil(() => enemiesAlive <= 0);
-
-            
+            while (enemiesAlive > 0)
+            {
+                yield return null;
+            }
 
             if (numberOfWaves < maxNumberOfWaves)
             { 
@@ -47,8 +52,6 @@ public class WaveManager : MonoBehaviour
                 yield return new WaitForSeconds(timeBetweenWaves);
             }
         }
-
-        
     }
 
     private void EnemyDestroyed()

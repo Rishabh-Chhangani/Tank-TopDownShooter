@@ -11,22 +11,34 @@ public class SoundFeedback : MonoBehaviour
 
     private void Awake()
     {
-        turret = GetComponentInParent<WeaponTurret>();
-        audioSource = GetComponent<AudioSource>();
+        if (turret == null)
+            turret = GetComponentInParent<WeaponTurret>();
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
     }
 
     private void OnEnable()
     {
-        turret.OnShoot += PlayShootSound;
+        if (turret != null)
+        {
+            turret.OnShoot += PlayShootSound;
+        }
     }
 
     private void OnDisable()
     {
-        turret.OnShoot -= PlayShootSound;
+        if (turret != null)
+        {
+            turret.OnShoot -= PlayShootSound;
+        }
     }
 
     private void PlayShootSound()
     {
-        audioSource.Play();
+        if (audioSource != null)
+        {
+            audioSource.Play();
+        }
     }
 }

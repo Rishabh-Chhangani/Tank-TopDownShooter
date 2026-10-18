@@ -4,12 +4,12 @@ using UnityEngine;
 
 public class DestroyIfDisabled : MonoBehaviour
 {
-    public bool SelfDistructionEnabled { get; set; } = false;
+    public bool SelfDestructionEnabled { get; set; } = false;
+    public bool SelfDistructionEnabled { get => SelfDestructionEnabled; set => SelfDestructionEnabled = value; }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
-        if (SelfDistructionEnabled)
+        if (SelfDestructionEnabled)
             Destroy(gameObject);
     }
-
 }

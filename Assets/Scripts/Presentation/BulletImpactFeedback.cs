@@ -7,18 +7,36 @@ public class BulletImpactFeedback : MonoBehaviour
     [SerializeField] private Bullet bullet;
     [SerializeField] private InstantiateUtil instantiateUtil;
 
+    private void Awake()
+    {
+        if (bullet == null)
+            bullet = GetComponent<Bullet>();
+
+        if (instantiateUtil == null)
+            instantiateUtil = GetComponent<InstantiateUtil>();
+    }
+
     private void OnEnable()
     {
-        bullet.OnHit += HandleHit;
+        if (bullet != null)
+        {
+            bullet.OnHit += HandleHit;
+        }
     }
 
     private void OnDisable()
     {
-        bullet.OnHit -= HandleHit;
+        if (bullet != null)
+        {
+            bullet.OnHit -= HandleHit;
+        }
     }
 
     private void HandleHit()
     {
-        instantiateUtil.InstantiateObject(bullet.transform.position);
+        if (instantiateUtil != null && bullet != null)
+        {
+            instantiateUtil.InstantiateObject(bullet.transform.position);
+        }
     }
 }

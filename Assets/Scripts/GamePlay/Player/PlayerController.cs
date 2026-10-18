@@ -33,8 +33,14 @@ public class PlayerController : MonoBehaviour
         tankController.HandleTurretRotation(GetMouseWorldPosition(inputHandler.LookInput));
     }
 
-   public Vector2 GetMouseWorldPosition(Vector3 mouseScreenPosition)
+    public Vector2 GetMouseWorldPosition(Vector3 mouseScreenPosition)
     {
+        if (mainCamera == null)
+            mainCamera = Camera.main;
+
+        if (mainCamera == null)
+            return Vector2.zero;
+
         mouseScreenPosition.z = mainCamera.nearClipPlane;
         Vector2 mouseWorldPosition = mainCamera.ScreenToWorldPoint(mouseScreenPosition);
         return mouseWorldPosition;

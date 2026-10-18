@@ -8,6 +8,12 @@ public class SimpleRandomMapGenerator: AbstractMapGenerator
     
     protected override void RunProceduralGeneration()
     {
+        if (simpleRandomWalkSO == null)
+        {
+            Debug.LogError("SimpleRandomWalkSO is not assigned on " + gameObject.name, this);
+            return;
+        }
+
         HashSet<Vector2Int> floorPositions = RunRandomWalk();
         tileMapVisualizer.Clear();
         tileMapVisualizer.PaintFloortile(floorPositions);

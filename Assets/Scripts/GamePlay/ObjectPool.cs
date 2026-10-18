@@ -98,7 +98,11 @@ public class ObjectPool : MonoBehaviour
             }
             else
             {
-                item.GetComponent<DestroyIfDisabled>().SelfDistructionEnabled = true;
+                var destroyIfDisabled = item.GetComponent<DestroyIfDisabled>();
+                if (destroyIfDisabled != null)
+                {
+                    destroyIfDisabled.SelfDestructionEnabled = true;
+                }
             }
 
         }

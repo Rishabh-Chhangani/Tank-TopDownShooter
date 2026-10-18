@@ -17,26 +17,38 @@ public class EngineAudio : MonoBehaviour
     [SerializeField]
     private float currentVolume;
 
+    private void Awake()
+    {
+        if (tankMovement == null)
+            tankMovement = GetComponentInParent<TankMovement>();
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+
+        currentVolume = minVolume;
+    }
+
     private void OnEnable()
     {
-        tankMovement.OnSpeedChange += ControlEngineVolume;
+        if (tankMovement != null)
+        {
+            tankMovement.OnSpeedChange += ControlEngineVolume;
+        }
     }
 
     private void OnDisable()
     {
-        tankMovement.OnSpeedChange -= ControlEngineVolume;
-    }
-
-    private void Awake()
-    {
-        audioSource = GetComponent<AudioSource>();
-        currentVolume = minVolume;
+        if (tankMovement != null)
+        {
+            tankMovement.OnSpeedChange -= ControlEngineVolume;
+        }
     }
 
     // Update is called once per frame
     void Start()
     {
-        audioSource.volume = currentVolume;
+        if (audioSource != null)
+            audioSource.volume = currentVolume;
     }
 
     private void ControlEngineVolume(float speed)

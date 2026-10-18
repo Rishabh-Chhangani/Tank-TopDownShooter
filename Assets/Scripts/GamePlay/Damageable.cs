@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class Damageable : MonoBehaviour
@@ -7,7 +7,7 @@ public class Damageable : MonoBehaviour
 
     public int maxHealth = 100;
 
-    private Transform rootEntity;
+    [SerializeField] private GameObject entityToDestroy;
     private bool isDead = false;
 
     public event Action OnDeath;
@@ -19,7 +19,11 @@ public class Damageable : MonoBehaviour
         if (currentHealth == 0)
             currentHealth = maxHealth;
 
-        rootEntity = transform.root;
+        if (entityToDestroy == null)
+        {
+            var tankController = GetComponentInParent<TankController>();
+            entityToDestroy = tankController != null ? tankController.gameObject : gameObject;
+        }
     }
 
     public int CurrentHealth
@@ -62,6 +66,13 @@ public class Damageable : MonoBehaviour
         
         OnDeath?.Invoke();
 
-        Destroy(rootEntity.gameObject);
+        if (entityToDestroy != null)
+        {
+            Destroy(entityToDestroy);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 }

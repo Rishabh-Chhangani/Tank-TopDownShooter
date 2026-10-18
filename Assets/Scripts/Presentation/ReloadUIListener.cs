@@ -11,6 +11,15 @@ public class ReloadUIListener : MonoBehaviour
     [SerializeField]
     private WeaponTurret weaponTurret;
 
+    private void Awake()
+    {
+        if (reloadSlider == null)
+            reloadSlider = GetComponent<Slider>();
+
+        if (weaponTurret == null)
+            weaponTurret = GetComponentInParent<WeaponTurret>();
+    }
+
     private void OnEnable()
     {
         if (weaponTurret != null)
@@ -29,7 +38,10 @@ public class ReloadUIListener : MonoBehaviour
 
     private void UpdateReloadSlider(float reloadPercentage)
     {
-        reloadSlider.value = reloadPercentage;
+        if (reloadSlider != null)
+        {
+            reloadSlider.value = reloadPercentage;
+        }
     }
 
 }

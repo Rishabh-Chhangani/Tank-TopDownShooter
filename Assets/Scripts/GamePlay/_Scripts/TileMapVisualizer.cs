@@ -13,6 +13,9 @@ public class TileMapVisualizer : MonoBehaviour
 
     public void PaintFloortile(IEnumerable<Vector2Int> floorPositions)
     {
+        if (floorTileMap == null || floorTile == null || floorPositions == null)
+            return;
+
         PaintTiles(floorPositions, floorTileMap, floorTile);
     }
 
@@ -27,12 +30,15 @@ public class TileMapVisualizer : MonoBehaviour
     private void PaintSingleTile(Tilemap tileMap, TileBase tile, Vector2Int position)
     {
         var tilePosition = tileMap.WorldToCell((Vector3Int)position);
-        tileMap.SetTile(tilePosition,tile);
+        tileMap.SetTile(tilePosition, tile);
     }
 
     public void Clear()
     {
-        floorTileMap.ClearAllTiles();
+        if (floorTileMap != null)
+        {
+            floorTileMap.ClearAllTiles();
+        }
     }
 
 }

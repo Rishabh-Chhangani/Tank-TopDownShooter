@@ -12,13 +12,22 @@ public class MuzzleFlash : MonoBehaviour
 
     private void Awake()
     {
-        turret = GetComponentInParent<WeaponTurret>();
-        turret.OnShoot += MuzzleFlashEffect;
+        if (turret == null)
+            turret = GetComponentInParent<WeaponTurret>();
 
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
     }
 
+    private void OnEnable()
+    {
+        if (turret != null)
+        {
+            turret.OnShoot += MuzzleFlashEffect;
+        }
+    }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
         if (turret != null)
         {
@@ -28,12 +37,10 @@ public class MuzzleFlash : MonoBehaviour
 
     private void MuzzleFlashEffect()
     {
-        
-
-        animator.enabled = true;
-        animator.Play("MuzzleFlash Animation", 0, 0f);
-
-       
-
+        if (animator != null)
+        {
+            animator.enabled = true;
+            animator.Play("MuzzleFlash Animation", 0, 0f);
+        }
     }
 }

@@ -5,35 +5,54 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance { get; private set; }
+
     private GameObject player;
     private SaveSystem saveSystem;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
         SceneManager.sceneLoaded += Initialized;
         DontDestroyOnLoad(gameObject);
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            SceneManager.sceneLoaded -= Initialized;
+        }
+    }
+
     private void Initialized(Scene scene, LoadSceneMode sceneMode)
     {
-       
         var playerInput = FindAnyObjectByType<PlayerInputHandler>();
         if (playerInput != null)
         {
             player = playerInput.gameObject;
         }
+
         saveSystem = FindObjectOfType<SaveSystem>();
-        if( player != null && saveSystem.LoadedData != null)
+        if (player != null && saveSystem != null && saveSystem.LoadedData != null)
         {
             var damageable = player.GetComponentInChildren<Damageable>();
-            damageable.CurrentHealth = saveSystem.LoadedData.playerHealth;
-
+            if (damageable != null)
+            {
+                damageable.CurrentHealth = saveSystem.LoadedData.playerHealth;
+            }
         }
     }
 
     public void LoadLevel()
     {
-        if(saveSystem.LoadedData != null)
+        if (saveSystem != null && saveSystem.LoadedData != null)
         {
             SceneManager.LoadScene(saveSystem.LoadedData.sceneIndex);
             return;
@@ -48,8 +67,13 @@ public class GameManager : MonoBehaviour
 
     public void SaveData()
     {
-        if (player != null)
-            saveSystem.SaveData(SceneManager.GetActiveScene().buildIndex + 1, player.GetComponentInChildren<Damageable>().CurrentHealth);
-
+        if (player != null && saveSystem != null)
+        {
+            var damageable = player.GetComponentInChildren<Damageable>();
+            if (damageable != null)
+            {
+                saveSystem.SaveData(SceneManager.GetActiveScene().buildIndex + 1, damageable.CurrentHealth);
+            }
+        }
     }
 }

@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class ObjectGeneratorRandomPositionUtil : MonoBehaviour
@@ -12,15 +11,26 @@ public class ObjectGeneratorRandomPositionUtil : MonoBehaviour
     [SerializeField]
     private Bullet bullet;
 
-    
+    private void Awake()
+    {
+        if (bullet == null)
+            bullet = GetComponent<Bullet>();
+    }
 
     private void OnEnable()
     {
-        bullet.OnHit += CreateObject;
+        if (bullet != null)
+        {
+            bullet.OnHit += CreateObject;
+        }
     }
+
     private void OnDisable()
     {
-        bullet.OnHit -= CreateObject;
+        if (bullet != null)
+        {
+            bullet.OnHit -= CreateObject;
+        }
     }
 
     protected Vector2 GetRandomPosition()
@@ -35,10 +45,16 @@ public class ObjectGeneratorRandomPositionUtil : MonoBehaviour
 
     public void CreateObject()
     {
-        Vector2 positoin = GetRandomPosition();
+        if (objectPrefab == null)
+            return;
+
+        Vector2 position = GetRandomPosition();
         GameObject impactObject = GetObject();
-        impactObject.transform.position = positoin;
-        impactObject.transform.rotation = Random2DRotation();
+        if (impactObject != null)
+        {
+            impactObject.transform.position = position;
+            impactObject.transform.rotation = Random2DRotation();
+        }
     }
 
     protected virtual GameObject GetObject()

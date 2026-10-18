@@ -31,7 +31,7 @@ public class AIStaticPatrolBehaviour : AIBehaviour
 
         float angle =
             Vector2.Angle(
-                tank.aimTurret.transform.right,
+                -tank.aimTurret.transform.up,
                 randomDirection);
 
         if (currentPatrolDelay <= 0f &&

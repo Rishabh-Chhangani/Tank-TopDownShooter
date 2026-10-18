@@ -10,16 +10,23 @@ public class HealthBarUIListener : MonoBehaviour
     [SerializeField]
     private Damageable damageable;
 
+    private void Awake()
+    {
+        if (healthBar == null)
+            healthBar = GetComponent<Slider>();
+
+        if (damageable == null)
+            damageable = GetComponentInParent<Damageable>();
+    }
+
     private void OnEnable()
     {
-
         if (damageable != null)
         {
             damageable.OnHealthChanged += UpdateHealthBar;
-
-
         }
     }
+
     private void Start()
     {
         if (damageable != null)
@@ -27,23 +34,22 @@ public class HealthBarUIListener : MonoBehaviour
             UpdateHealthBar(
                 (float)damageable.CurrentHealth / damageable.maxHealth
             );
-
         }
     }
 
-
-private void OnDisable()
+    private void OnDisable()
     {
         if (damageable != null)
         {
             damageable.OnHealthChanged -= UpdateHealthBar;
-
         }
     }   
 
-
     private void UpdateHealthBar(float healthPercentage)
     { 
-        healthBar.value = healthPercentage;
+        if (healthBar != null)
+        {
+            healthBar.value = healthPercentage;
+        }
     }
 }

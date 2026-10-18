@@ -11,10 +11,19 @@ public class SaveSystem : MonoBehaviour
 
     public event Action<bool> OnDataLoadedResult;
 
+    public static SaveSystem Instance { get; private set; }
+
     private bool isInitialized = false;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
         DontDestroyOnLoad(gameObject);
     }
 
