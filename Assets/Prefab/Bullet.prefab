@@ -223,4 +223,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d07edb7d257de284b9cefb798c02bbfb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bulletData: {fileID: 11400000, guid: fbed88760a45d864890460e0506dd538, type: 2}
+  bulletData: {fileID: 11400000, guid: 7be0827fc030abc469a863d4651a9104, type: 2}

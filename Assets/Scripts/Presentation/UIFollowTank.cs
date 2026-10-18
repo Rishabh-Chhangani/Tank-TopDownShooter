@@ -4,7 +4,13 @@ using UnityEngine;
 
 public class UIFollowTank : MonoBehaviour
 {
-    public Transform objectToFollow;
+    [SerializeField] private Transform objectToFollow;
+
+    public Transform ObjectToFollow
+    {
+        get => objectToFollow;
+        set => objectToFollow = value;
+    }
     [SerializeField]
     RectTransform rectTransform;
 

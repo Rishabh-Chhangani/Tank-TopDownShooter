@@ -6,6 +6,11 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "SimpleRandomWalkSO_", menuName = "PCG/SimpleRandomWalkData")]
 public class SimpleRandomWalkSO : ScriptableObject
 {
-    public int iteration = 10, walkLength = 10;
-    public bool startRandomlyEachIteration = true;
+    [SerializeField] private int iteration = 10;
+    [SerializeField] private int walkLength = 10;
+    [SerializeField] private bool startRandomlyEachIteration = true;
+
+    public int Iteration => iteration;
+    public int WalkLength => walkLength;
+    public bool StartRandomlyEachIteration => startRandomlyEachIteration;
 }

@@ -31,9 +31,7 @@ public class HealthBarUIListener : MonoBehaviour
     {
         if (damageable != null)
         {
-            UpdateHealthBar(
-                (float)damageable.CurrentHealth / damageable.maxHealth
-            );
+            UpdateHealthBar(damageable.HealthNormalized);
         }
     }
 

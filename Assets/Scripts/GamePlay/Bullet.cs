@@ -5,7 +5,13 @@ public class Bullet : MonoBehaviour
 {
     private Rigidbody2D rb2d;
 
-    public BulletData bulletData;
+    [SerializeField] private BulletData bulletData;
+
+    public BulletData BulletData
+    {
+        get => bulletData;
+        set => bulletData = value;
+    }
 
     private Vector2 startPosition;
     private float maxDistanceSqr = 0f;
@@ -34,8 +40,8 @@ public class Bullet : MonoBehaviour
     public void Initialize()
     {
         startPosition = transform.position;
-        maxDistanceSqr = bulletData != null ? bulletData.maxDistance * bulletData.maxDistance : 0f;
-        rb2d.velocity = transform.up * (bulletData != null ? bulletData.speed : 0f);
+        maxDistanceSqr = bulletData != null ? bulletData.MaxDistance * bulletData.MaxDistance : 0f;
+        rb2d.velocity = transform.up * (bulletData != null ? bulletData.Speed : 0f);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -43,9 +49,9 @@ public class Bullet : MonoBehaviour
         
         Damageable damageable = collision.gameObject.GetComponent<Damageable>();
         OnHit?.Invoke();
-        if (damageable != null)
+        if (damageable != null && bulletData != null)
         {
-            damageable.TakeDamage(bulletData.damage);
+            damageable.TakeDamage(bulletData.Damage);
             
         }
         DisableBullet();

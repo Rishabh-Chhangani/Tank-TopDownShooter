@@ -6,7 +6,11 @@ using UnityEngine;
 public class TurretData : ScriptableObject
 {
 
-    public GameObject bulletPrefab;
-    public float reloadDelay = 1;
-    public BulletData bulletData;
+    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private float reloadDelay = 1f;
+    [SerializeField] private BulletData bulletData;
+
+    public GameObject BulletPrefab => bulletPrefab;
+    public float ReloadDelay => reloadDelay;
+    public BulletData BulletData => bulletData;
 }

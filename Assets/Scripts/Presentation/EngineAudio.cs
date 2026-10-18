@@ -10,12 +10,17 @@ public class EngineAudio : MonoBehaviour
     [SerializeField]
     private AudioSource audioSource;
 
-    public float minVolume = 0.05f;
-    public float maxVolume   = 0.1f;
-    public float volumeIncrease = 0.01f;
+    [SerializeField] private float minVolume = 0.05f;
+    [SerializeField] private float maxVolume = 0.1f;
+    [SerializeField] private float volumeIncrease = 0.01f;
 
     [SerializeField]
     private float currentVolume;
+
+    public float MinVolume => minVolume;
+    public float MaxVolume => maxVolume;
+    public float VolumeIncrease => volumeIncrease;
+    public float CurrentVolume => currentVolume;
 
     private void Awake()
     {

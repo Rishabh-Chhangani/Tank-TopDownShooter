@@ -9,6 +9,8 @@ public class MuzzleFlash : MonoBehaviour
     [SerializeField]
     private Animator animator;
 
+    public WeaponTurret Turret => turret;
+    public Animator Animator => animator;
 
     private void Awake()
     {
@@ -17,6 +19,11 @@ public class MuzzleFlash : MonoBehaviour
 
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
+
+        if (animator != null)
+        {
+            animator.enabled = false;
+        }
     }
 
     private void OnEnable()

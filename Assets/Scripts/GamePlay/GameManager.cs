@@ -6,9 +6,11 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
-
     private GameObject player;
     private SaveSystem saveSystem;
+
+    public GameObject Player => player;
+    public SaveSystem SaveSystem => saveSystem;
 
     private void Awake()
     {
@@ -45,7 +47,7 @@ public class GameManager : MonoBehaviour
             var damageable = player.GetComponentInChildren<Damageable>();
             if (damageable != null)
             {
-                damageable.CurrentHealth = saveSystem.LoadedData.playerHealth;
+                damageable.CurrentHealth = saveSystem.LoadedData.PlayerHealth;
             }
         }
     }
@@ -54,16 +56,13 @@ public class GameManager : MonoBehaviour
     {
         if (saveSystem != null && saveSystem.LoadedData != null)
         {
-            SceneManager.LoadScene(saveSystem.LoadedData.sceneIndex);
+            SceneManager.LoadScene(saveSystem.LoadedData.SceneIndex);
             return;
         }
         LoadNextLevel();
     }
 
-    public void LoadNextLevel()
-    {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
-    }
+    public void LoadNextLevel() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
 
     public void SaveData()
     {

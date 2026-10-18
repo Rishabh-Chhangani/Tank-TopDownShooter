@@ -4,22 +4,21 @@ using UnityEngine;
 
 public class TankController : MonoBehaviour
 {
-    public TankMovement tankMovement;
-    public AimTurret aimTurret;
-    public WeaponTurret[] weapon;
+    [SerializeField] private TankMovement tankMovement;
+    [SerializeField] private AimTurret aimTurret;
+    [SerializeField] private WeaponTurret[] weapon;
+
+    public TankMovement TankMovement => tankMovement;
+    public AimTurret AimTurret => aimTurret;
+    public IReadOnlyList<WeaponTurret> Weapon => weapon;
 
     private void Awake()
     {
-       
+        if (tankMovement == null) tankMovement = GetComponent<TankMovement>();
 
-        if (tankMovement == null)
-            tankMovement = GetComponent<TankMovement>();
+        if (aimTurret == null) aimTurret = GetComponentInChildren<AimTurret>();
 
-        if (aimTurret == null)
-            aimTurret = GetComponentInChildren<AimTurret>();
-
-        if (weapon == null || weapon.Length == 0)
-            weapon = GetComponentsInChildren<WeaponTurret>();
+        if (weapon == null || weapon.Length == 0) weapon = GetComponentsInChildren<WeaponTurret>();
 
     }
 
@@ -40,14 +39,10 @@ public class TankController : MonoBehaviour
     }
 
     public void HandleShoot()
-    {
-       
+    {  
         foreach (var w in weapon)
         {
             w.Fire();
         }
     }
-
-
-
 }

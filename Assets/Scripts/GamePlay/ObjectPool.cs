@@ -13,9 +13,25 @@ public class ObjectPool : MonoBehaviour
 
     protected Queue<GameObject> objectPool;
 
-    public Transform spawnedObjectsParent;
+    [SerializeField] private Transform spawnedObjectsParent;
 
-    public bool alwaysDestroy = false;
+    [SerializeField] private bool alwaysDestroy = false;
+
+    public Transform SpawnedObjectsParent
+    {
+        get => spawnedObjectsParent;
+        set => spawnedObjectsParent = value;
+    }
+
+    public bool AlwaysDestroy
+    {
+        get => alwaysDestroy;
+        set => alwaysDestroy = value;
+    }
+
+    public GameObject ObjectToPool => objectToPool;
+    public int PoolSize => poolSize;
+    public int ActivePoolCount => objectPool != null ? objectPool.Count : 0;
 
     private void Awake()
     {

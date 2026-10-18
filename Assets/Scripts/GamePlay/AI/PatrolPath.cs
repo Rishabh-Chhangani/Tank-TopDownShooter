@@ -3,14 +3,19 @@ using UnityEngine;
 
 public class PatrolPath : MonoBehaviour
 {
-    public List<Transform> patrolPoints = new List<Transform>();
+    [SerializeField] private List<Transform> patrolPoints = new List<Transform>();
 
-    public int Length { get => patrolPoints != null ? patrolPoints.Count : 0; }
+    public IReadOnlyList<Transform> PatrolPoints => patrolPoints;
+    public int Length => patrolPoints != null ? patrolPoints.Count : 0;
 
     [Header("Gizmo paramenters")]
-    public Color pointsColor = Color.blue;
-    public float pointSize = 1.0f;
-    public Color lineColor = Color.magenta;
+    [SerializeField] private Color pointsColor = Color.blue;
+    [SerializeField] private float pointSize = 1.0f;
+    [SerializeField] private Color lineColor = Color.magenta;
+
+    public Color PointsColor => pointsColor;
+    public float PointSize => pointSize;
+    public Color LineColor => lineColor;
 
     public struct PathPoint
     {

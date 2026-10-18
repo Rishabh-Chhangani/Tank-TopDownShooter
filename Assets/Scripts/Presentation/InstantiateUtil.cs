@@ -4,7 +4,13 @@ using UnityEngine;
 
 public class InstantiateUtil : MonoBehaviour
 {
-    public GameObject objectToInstantiate;
+    [SerializeField] private GameObject objectToInstantiate;
+
+    public GameObject ObjectToInstantiate
+    {
+        get => objectToInstantiate;
+        set => objectToInstantiate = value;
+    }
 
     public void InstantiateObject(Vector2 position)
     {

@@ -5,10 +5,14 @@ using UnityEngine;
 public class TrackMarkSpawner : MonoBehaviour
 {
     private Vector2 lastPosition;
-    public float trackDistance = 0.2f;
+    [SerializeField] private float trackDistance = 0.2f;
     private float trackDistanceSqr;
-    public GameObject trackMarkPrefab;
-    public int objectPoolSize = 50;
+    [SerializeField] private GameObject trackMarkPrefab;
+    [SerializeField] private int objectPoolSize = 50;
+
+    public float TrackDistance => trackDistance;
+    public GameObject TrackMarkPrefab => trackMarkPrefab;
+    public int ObjectPoolSize => objectPoolSize;
 
     private ObjectPool objectPool;
 

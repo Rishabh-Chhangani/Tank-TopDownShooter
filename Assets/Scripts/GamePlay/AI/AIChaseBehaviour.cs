@@ -22,7 +22,7 @@ public class AIChaseBehaviour : AIBehaviour
 
         Vector2 directionToTarget =
             (Vector2)aiDetector.Target.position -
-            (Vector2)tank.tankMovement.transform.position;
+            (Vector2)tank.TankMovement.transform.position;
 
         if (directionToTarget.sqrMagnitude <= 0.01f)
         {
@@ -32,7 +32,7 @@ public class AIChaseBehaviour : AIBehaviour
 
         directionToTarget.Normalize();
 
-        Vector2 tankForward = -tank.tankMovement.transform.up;
+        Vector2 tankForward = -tank.TankMovement.transform.up;
 
         float dotProduct =
             Vector2.Dot(

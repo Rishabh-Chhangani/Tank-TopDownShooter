@@ -24,14 +24,14 @@ public class AIStaticPatrolBehaviour : AIBehaviour
         AIDetector aiDetector)
     {
         if (tank == null ||
-            tank.aimTurret == null)
+            tank.AimTurret == null)
         {
             return;
         }
 
         float angle =
             Vector2.Angle(
-                -tank.aimTurret.transform.up,
+                -tank.AimTurret.transform.up,
                 randomDirection);
 
         if (currentPatrolDelay <= 0f &&
@@ -52,7 +52,7 @@ public class AIStaticPatrolBehaviour : AIBehaviour
             else
             {
                 tank.HandleTurretRotation(
-                    (Vector2)tank.aimTurret.transform.position +
+                    (Vector2)tank.AimTurret.transform.position +
                     randomDirection);
             }
         }

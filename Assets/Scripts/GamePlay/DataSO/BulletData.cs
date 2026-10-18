@@ -5,7 +5,11 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewBuletData", menuName = "Data/BulletData")]
 public class BulletData : ScriptableObject
 {
-    public float speed = 10;
-    public int damage = 50;
-    public float maxDistance = 100;
+    [SerializeField] private float speed = 10f;
+    [SerializeField] private int damage = 50;
+    [SerializeField] private float maxDistance = 100f;
+
+    public float Speed => speed;
+    public int Damage => damage;
+    public float MaxDistance => maxDistance;
 }

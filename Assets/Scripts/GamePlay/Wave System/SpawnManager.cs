@@ -8,12 +8,13 @@ public class SpawnManager : MonoBehaviour
     [SerializeField] private float timeBetweenSpawn = 0.4f;
     [SerializeField] private int numberOfEnemiesToSpawn = 5;
 
+    public float TimeBetweenSpawn => timeBetweenSpawn;
+    public int NumberOfEnemiesToSpawn => numberOfEnemiesToSpawn;
+    public EnemySpawner EnemySpawner => enemySpawner;
+
     public event Action OnEnemyDestroyed;
 
-    public int GetNumberOfEnemiesToSpawn()
-    {
-        return numberOfEnemiesToSpawn;
-    }
+    public int GetNumberOfEnemiesToSpawn() => NumberOfEnemiesToSpawn;
 
     public IEnumerator ManageSpawn()
     {
@@ -46,9 +47,9 @@ public class SpawnManager : MonoBehaviour
         OnEnemyDestroyed?.Invoke();
     }
 
-    public void ResetEnemySpawnPoints()
+    public void SetEnemySpawnPoints()
 
     {
-        enemySpawner.ResetSpawnPoints();
+        enemySpawner.SetSpawnPoints();
     }
 }

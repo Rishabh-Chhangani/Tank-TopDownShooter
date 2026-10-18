@@ -41,9 +41,7 @@ public class EnemySpawner : MonoBehaviour
     {
         if (_availableSpawnPoints.Count == 0)
         {
-            Debug.LogWarning(
-                "No available Spawn points have been found. Check scene."
-            );
+            Debug.LogWarning("No available Spawn points have been found. Check scene.");
 
             return null;
         }
@@ -74,7 +72,9 @@ public class EnemySpawner : MonoBehaviour
     }
 
 
-    public void ResetSpawnPoints()
+
+
+    public void SetSpawnPoints()
     {
         _availableSpawnPoints = new List<SpawnPoint>(_allSpawnPoints);
     }

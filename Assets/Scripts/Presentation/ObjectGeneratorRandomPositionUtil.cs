@@ -4,9 +4,11 @@ using UnityEngine;
 
 public class ObjectGeneratorRandomPositionUtil : MonoBehaviour
 {
-    public GameObject objectPrefab;
+    [SerializeField] private GameObject objectPrefab;
+    [SerializeField] private float radius = 0.2f;
 
-    public float radius = 0.2f;
+    public GameObject ObjectPrefab => objectPrefab;
+    public float Radius => radius;
 
     [SerializeField]
     private Bullet bullet;

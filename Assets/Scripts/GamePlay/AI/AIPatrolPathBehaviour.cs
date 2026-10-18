@@ -89,7 +89,7 @@ public class AIPatrolPathBehaviour : AIBehaviour
 
         Vector2 directionToGo =
             currentPatrolTarget -
-            (Vector2)tank.tankMovement.transform.position;
+            (Vector2)tank.TankMovement.transform.position;
 
         if (directionToGo.sqrMagnitude <= 0.01f)
         {
@@ -101,14 +101,14 @@ public class AIPatrolPathBehaviour : AIBehaviour
 
         float dotProduct =
             Vector2.Dot(
-                tank.tankMovement.transform.up,
+                tank.TankMovement.transform.up,
                 directionToGo.normalized);
 
         if (dotProduct < 0.98f)
         {
             Vector3 crossProduct =
                 Vector3.Cross(
-                    tank.tankMovement.transform.up,
+                    tank.TankMovement.transform.up,
                     directionToGo.normalized);
 
             int rotationResult =

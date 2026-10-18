@@ -25,11 +25,11 @@ public class SimpleRandomMapGenerator: AbstractMapGenerator
         var currentPosition = startPosition;
         HashSet<Vector2Int> floorPositions = new HashSet<Vector2Int>();
 
-        for (int i = 0; i < simpleRandomWalkSO.iteration; i++)
+        for (int i = 0; i < simpleRandomWalkSO.Iteration; i++)
         {
-            var path = ProceduralGenerationAlgorithms.SimpleRandomWalk(currentPosition, simpleRandomWalkSO.walkLength);
+            var path = ProceduralGenerationAlgorithms.SimpleRandomWalk(currentPosition, simpleRandomWalkSO.WalkLength);
             floorPositions.UnionWith(path);
-            if (simpleRandomWalkSO.startRandomlyEachIteration)
+            if (simpleRandomWalkSO.StartRandomlyEachIteration)
                 currentPosition = floorPositions.ElementAt(UnityEngine.Random.Range(0, floorPositions.Count));
         }
         return floorPositions;

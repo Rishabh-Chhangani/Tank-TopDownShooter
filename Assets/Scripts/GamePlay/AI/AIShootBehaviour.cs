@@ -3,13 +3,17 @@ using UnityEngine;
 public class AIShootBehaviour : AIBehaviour
 {
     [Range(1f, 180f)]
-    public float fieldOfVisionForShooting = 60f;
+    [SerializeField] private float fieldOfVisionForShooting = 60f;
 
     // Added: store the remaining cooldown before next shot
     private float currentShootCooldown = 0f;
 
     [SerializeField, Min(0f)]
     private float shootCooldown = 1f;
+
+    public float FieldOfVisionForShooting => fieldOfVisionForShooting;
+    public float ShootCooldown => shootCooldown;
+    public float CurrentShootCooldown => currentShootCooldown;
 
     public override void PerformAction(
       TankController tank,
@@ -18,7 +22,7 @@ public class AIShootBehaviour : AIBehaviour
         if (tank == null ||
             aiDetector == null ||
             aiDetector.Target == null ||
-            tank.aimTurret == null)
+            tank.AimTurret == null)
         {
             return;
         }
@@ -56,18 +60,18 @@ public class AIShootBehaviour : AIBehaviour
         if (aiDetector == null ||
             aiDetector.Target == null ||
             tank == null ||
-            tank.aimTurret == null)
+            tank.AimTurret == null)
         {
             return false;
         }
 
         Vector2 direction =
             aiDetector.Target.position -
-            tank.aimTurret.transform.position;
+            tank.AimTurret.transform.position;
 
         float angle =
             Vector2.Angle(
-                -tank.aimTurret.transform.up,
+                -tank.AimTurret.transform.up,
                 direction);
 
         return angle <

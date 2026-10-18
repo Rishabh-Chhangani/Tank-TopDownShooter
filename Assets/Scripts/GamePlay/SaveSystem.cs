@@ -3,9 +3,13 @@ using UnityEngine;
 
 public class SaveSystem : MonoBehaviour
 {
-    public string playerHealthKey = "PlayerHealth";
-    public string sceneKey = "SceneIndex";
-    public string savePresentKey = "SavePresent";
+    [SerializeField] private string playerHealthKey = "PlayerHealth";
+    [SerializeField] private string sceneKey = "SceneIndex";
+    [SerializeField] private string savePresentKey = "SavePresent";
+
+    public string PlayerHealthKey => playerHealthKey;
+    public string SceneKey => sceneKey;
+    public string SavePresentKey => savePresentKey;
 
     public LoadedData LoadedData { get; private set; }
 
@@ -86,6 +90,9 @@ public class SaveSystem : MonoBehaviour
 
 public class LoadedData
 {
-    public int playerHealth = -1;
-    public int sceneIndex = -1;
+    public int PlayerHealth { get; set; } = -1;
+    public int SceneIndex { get; set; } = -1;
+
+    public int playerHealth { get => PlayerHealth; set => PlayerHealth = value; }
+    public int sceneIndex { get => SceneIndex; set => SceneIndex = value; }
 }
