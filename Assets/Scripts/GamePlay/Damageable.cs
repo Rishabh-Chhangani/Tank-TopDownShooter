@@ -6,11 +6,11 @@ public class Damageable : MonoBehaviour
     [SerializeField] private int currentHealth = 0;
     [SerializeField] private int maxHealth = 100;
     [SerializeField] private GameObject entityToDestroy;
-    private bool isDead = false;
+    private bool _isDead = false;
 
     public int MaxHealth => maxHealth;
-    public bool IsDead => isDead;
-    public bool IsAlive => !isDead;
+    public bool IsDead => _isDead;
+    public bool IsAlive => !_isDead;
     public float HealthNormalized => maxHealth > 0 ? (float)currentHealth / maxHealth : 0f;
     public GameObject EntityToDestroy
     {
@@ -66,7 +66,7 @@ public class Damageable : MonoBehaviour
 
     public void TakeDamage(int damagePoints)
     {
-        if (isDead)
+        if (_isDead)
             return;
         
         CurrentHealth -= damagePoints;
@@ -79,20 +79,13 @@ public class Damageable : MonoBehaviour
 
     public void Die()
     {
-        if (isDead)
+        if (_isDead)
             return;
         
-        isDead = true;
+        _isDead = true;
         
         OnDeath?.Invoke();
 
-        if (entityToDestroy != null)
-        {
-            Destroy(entityToDestroy);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        Destroy(entityToDestroy != null ? entityToDestroy : gameObject);
     }
 }

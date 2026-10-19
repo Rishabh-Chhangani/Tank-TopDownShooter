@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class WaveManager : MonoBehaviour
 {
-
-
     public enum WaveStates
     {
         WavePrep,
@@ -14,131 +12,163 @@ public class WaveManager : MonoBehaviour
         ShopPhase,
         GameOver,
         Victory,
-        
     }
+    
 
-
-    private float wavecountdown = 5f;
+    private float _waveCountDown = 5f;
     [SerializeField] private SpawnManager spawnManager;
     [SerializeField] private int maxNumberOfWaves = 2;
     [SerializeField] private float timeBetweenWaves = 5f;
 
-    private int numberOfWaves = 0;
-    private int enemiesAlive = 0;
-    private WaveStates currentState;
+    private Damageable _playerDamageable;
+    private Coroutine _spawnCoroutine;
+    private int _numberOfWaves = 0;
+    private int _enemiesAlive = 0;
+    private WaveStates _currentState;
 
-    public int CurrentWave => numberOfWaves;
+    public int CurrentWave => _numberOfWaves;
     public int MaxNumberOfWaves => maxNumberOfWaves;
+
     public int EnemiesAlive
     {
-        get
-        {
-            return enemiesAlive;
-        }
+        get => _enemiesAlive;
 
-        set
-        {
-            enemiesAlive = value;
-        }
+        set => _enemiesAlive = value;
     }
+
     public float TimeBetweenWaves => timeBetweenWaves;
 
     public event Action<WaveStates> OnStateChanged;
 
     private void Start()
     {
+        Time.timeScale = 1f;
         if (spawnManager != null)
         {
             spawnManager.OnEnemyDestroyed += EnemyDestroyed;
-          
         }
+        HookPlayerDeath();
         SwitchState(WaveStates.WavePrep);
+        
+    }
+
+    private void Update()
+    {
+        switch (_currentState)
+        {
+            case WaveStates.WavePrep:
+                _waveCountDown -= Time.deltaTime;
+                if (_waveCountDown <= 0)
+                {
+                    SwitchState(WaveStates.WaveActive);
+                }
+                break;
+            case WaveStates.ShopPhase:
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    SwitchState(WaveStates.WavePrep);
+                }
+                break;
+        }
     }
 
     private void OnDestroy()
     {
+        Time.timeScale = 1f;
         if (spawnManager != null)
         {
             spawnManager.OnEnemyDestroyed -= EnemyDestroyed;
         }
+
+        if (_playerDamageable != null)
+        {
+            _playerDamageable.OnDeath -= HandlePlayerDeath;
+        }
     }
-
-
 
 
     public void SwitchState(WaveStates newState)
     {
-        OnExitState(currentState);
-        currentState = newState;
-        OnEnterState(currentState);
-        OnStateChanged?.Invoke(currentState);
+        OnExitState(_currentState);
+        _currentState = newState;
+        OnEnterState(_currentState);
+        OnStateChanged?.Invoke(_currentState);
     }
+
 
     private void OnEnterState(WaveStates currentState)
     {
-        switch(currentState)
+        switch (currentState)
         {
             case WaveStates.WavePrep:
-                numberOfWaves++;
-                spawnManager.SetEnemySpawnPoints();
-                wavecountdown -= Time.deltaTime;
+                _numberOfWaves++;
+                _waveCountDown = timeBetweenWaves;
+                if (spawnManager != null)
+                {
+                    spawnManager.SetEnemySpawnPoints();
+                }
+
                 break;
             case WaveStates.WaveActive:
-                EnemiesAlive = spawnManager.NumberOfEnemiesToSpawn;
-                spawnManager.ManageSpawn();
-                if(EnemiesAlive <= 0)
-                    SwitchState(WaveStates.WaveCompleted);
+                if (spawnManager != null)
+                {
+                    EnemiesAlive = spawnManager.NumberOfEnemiesToSpawn;
+                    _spawnCoroutine = StartCoroutine(spawnManager.ManageSpawn());
+                }
                 break;
             case WaveStates.WaveCompleted:
-                if(numberOfWaves >= maxNumberOfWaves)                
-                    SwitchState(WaveStates.Victory);
-                else
-                    SwitchState(WaveStates.ShopPhase);
+                SwitchState(_numberOfWaves >= maxNumberOfWaves ? WaveStates.Victory : WaveStates.ShopPhase);
                 break;
             case WaveStates.ShopPhase:
-                if(Input.GetKeyDown(KeyCode.Space))
-                    SwitchState(WaveStates.WavePrep);
+                
                 break;
             case WaveStates.GameOver:
-                Time.timeScale = 0f;
-                break;
             case WaveStates.Victory:
                 Time.timeScale = 0f;
                 break;
         }
-
     }
 
     private void OnExitState(WaveStates currentState)
     {
-        
+        if (_spawnCoroutine != null)
+        {
+            StopCoroutine(_spawnCoroutine);
+            _spawnCoroutine = null;
+        }
     }
 
-    private IEnumerator WaveLoop()
+    private void HookPlayerDeath()
     {
-        while (numberOfWaves < maxNumberOfWaves)
+        GameObject player = GameManager.Instance != null ? GameManager.Instance.Player : null;
+        if(player == null)
         {
-            numberOfWaves++;
+            var inputHandler = FindAnyObjectByType<PlayerInputHandler>();
+            if (inputHandler != null) player = inputHandler.gameObject;
+        }
 
-            enemiesAlive = spawnManager.NumberOfEnemiesToSpawn;
-
-            yield return StartCoroutine(spawnManager.ManageSpawn());
-
-            while (enemiesAlive > 0)
+        if (player != null)
+        {
+            _playerDamageable = player.GetComponentInChildren<Damageable>();
+            if (_playerDamageable != null)
             {
-                yield return null;
-            }
-
-            if (numberOfWaves < maxNumberOfWaves)
-            { 
-                spawnManager.SetEnemySpawnPoints();
-                yield return new WaitForSeconds(timeBetweenWaves);
+                _playerDamageable.OnDeath += HandlePlayerDeath;
             }
         }
+
+    }
+
+    private void HandlePlayerDeath()
+    {
+        SwitchState(WaveStates.GameOver);
     }
 
     private void EnemyDestroyed()
     {
-        enemiesAlive--;
+        _enemiesAlive--;
+        if (_currentState == WaveStates.WaveActive && _enemiesAlive <= 0)
+        {
+            SwitchState(WaveStates.WaveCompleted);
+        }
     }
 }

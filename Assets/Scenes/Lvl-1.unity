@@ -1046,11 +1046,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 901808357}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b6aa3b6232b0d5478532fef54f3d2b3, type: 3}
+  m_Script: {fileID: 11500000, guid: 51f998a24cf5fd84bab4a9c1c14ba3fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _allSpawnPoints: []
-  _availableSpawnPoints: []
   enemyPrefab: {fileID: 3191135473193572949, guid: 20d1faf06d8d8aa4d9cc6a313168f1c7, type: 3}
   enemyParent: {fileID: 0}
 --- !u!1 &926426590
@@ -1094,12 +1092,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 926426590}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 10a20827807191544ba8e8ab26964458, type: 3}
+  m_Script: {fileID: 11500000, guid: 05911306ef8d8fc4d866448c9933e9db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   spawnManager: {fileID: 1765087981}
   maxNumberOfWaves: 2
-  timeBetweenWaves: 3
+  timeBetweenWaves: 5
 --- !u!1 &977277017
 GameObject:
   m_ObjectHideFlags: 0
@@ -6559,12 +6557,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1765087979}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 923f179a0716fcc4b80e532d537ac498, type: 3}
+  m_Script: {fileID: 11500000, guid: 273888e84d1e1534894f9414b07f8458, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   enemySpawner: {fileID: 901808359}
   timeBetweenSpawn: 0.4
-  numberOfEnemiesToSpawn: 6
+  numberOfEnemiesToSpawn: 5
 --- !u!1001 &1772202187
 PrefabInstance:
   m_ObjectHideFlags: 0

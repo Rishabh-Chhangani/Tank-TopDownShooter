@@ -3,8 +3,8 @@ using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    [SerializeField] private List<SpawnPoint> _allSpawnPoints;
-    [SerializeField] private List<SpawnPoint> _availableSpawnPoints;
+    private List<SpawnPoint> _allSpawnPoints;
+    private List<SpawnPoint> _availableSpawnPoints;
     [SerializeField] private GameObject enemyPrefab;
 
     [SerializeField] private Transform enemyParent;
@@ -41,9 +41,13 @@ public class EnemySpawner : MonoBehaviour
     {
         if (_availableSpawnPoints.Count == 0)
         {
-            Debug.LogWarning("No available Spawn points have been found. Check scene.");
+            if (_allSpawnPoints.Count == 0)
+            {
+                Debug.LogWarning("No available Spawn points have been found. Check scene.");
+                return null;   
+            }
 
-            return null;
+            _availableSpawnPoints = new List<SpawnPoint>(_allSpawnPoints);
         }
 
         int index = Random.Range(0, _availableSpawnPoints.Count);
@@ -55,11 +59,6 @@ public class EnemySpawner : MonoBehaviour
             spawnPoint.transform.position,
             spawnPoint.transform.rotation
         );
-
-        TankController tank = enemy.GetComponentInChildren<TankController>();
-        Rigidbody2D rb = tank.GetComponent<Rigidbody2D>();
-
-       
 
         if (enemyParent != null)
         {
