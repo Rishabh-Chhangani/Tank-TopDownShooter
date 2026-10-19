@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class WaveManager : MonoBehaviour
 {
@@ -37,6 +38,8 @@ public class WaveManager : MonoBehaviour
     }
 
     public float TimeBetweenWaves => timeBetweenWaves;
+    public float WaveCountDown => _waveCountDown;
+    public WaveStates CurrentState => _currentState;
 
     public event Action<WaveStates> OnStateChanged;
 
@@ -64,7 +67,9 @@ public class WaveManager : MonoBehaviour
                 }
                 break;
             case WaveStates.ShopPhase:
-                if (Input.GetKeyDown(KeyCode.Space))
+                bool spacePressed = (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+                                 || Input.GetKeyDown(KeyCode.Space);
+                if (spacePressed)
                 {
                     SwitchState(WaveStates.WavePrep);
                 }
@@ -101,6 +106,7 @@ public class WaveManager : MonoBehaviour
         switch (currentState)
         {
             case WaveStates.WavePrep:
+                Time.timeScale = 1f;
                 _numberOfWaves++;
                 _waveCountDown = timeBetweenWaves;
                 if (spawnManager != null)
@@ -110,6 +116,7 @@ public class WaveManager : MonoBehaviour
 
                 break;
             case WaveStates.WaveActive:
+                Time.timeScale = 1f;
                 if (spawnManager != null)
                 {
                     EnemiesAlive = spawnManager.NumberOfEnemiesToSpawn;
@@ -120,7 +127,7 @@ public class WaveManager : MonoBehaviour
                 SwitchState(_numberOfWaves >= maxNumberOfWaves ? WaveStates.Victory : WaveStates.ShopPhase);
                 break;
             case WaveStates.ShopPhase:
-                
+                Time.timeScale = 0f;
                 break;
             case WaveStates.GameOver:
             case WaveStates.Victory:
@@ -131,6 +138,11 @@ public class WaveManager : MonoBehaviour
 
     private void OnExitState(WaveStates currentState)
     {
+        if (currentState == WaveStates.ShopPhase)
+        {
+            Time.timeScale = 1f;
+        }
+
         if (_spawnCoroutine != null)
         {
             StopCoroutine(_spawnCoroutine);
