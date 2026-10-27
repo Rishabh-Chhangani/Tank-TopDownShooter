@@ -14,7 +14,7 @@ TagManager:
   - Bullet
   - Agent
   - Hitable
-  - ObstacleMovement
+  - Low Cover
   - Player
   - Enemy
   - 

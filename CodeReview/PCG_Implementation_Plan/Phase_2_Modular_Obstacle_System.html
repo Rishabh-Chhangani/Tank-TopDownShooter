@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 2 Modular Obstacle System</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-code: #1f242c;
+    --border-color: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent-quote: #238636;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: #f0f6fc;
+    margin-top: 28px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  h1 { font-size: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h3 { font-size: 1.25rem; }
+  p { margin-bottom: 16px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    padding: 0.2em 0.4em;
+    background-color: var(--bg-code);
+    border-radius: 6px;
+    font-size: 85%;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  pre {
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow-x: auto;
+    line-height: 1.45;
+  }
+  pre code { background: none; padding: 0; }
+  ul, ol { padding-left: 2em; margin-bottom: 16px; }
+  li { margin-top: 0.35em; }
+  blockquote {
+    padding: 0 1em;
+    color: var(--text-secondary);
+    border-left: 4px solid var(--accent);
+    background-color: var(--bg-secondary);
+    border-radius: 0 4px 4px 0;
+    margin: 16px 0;
+  }
+  hr {
+    height: 1px;
+    background-color: var(--border-color);
+    border: none;
+    margin: 32px 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+  }
+  tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+</style>
+</head>
+<body>
+<h1>Modular Arena Obstacle Generation System</h1>
+<h2>1. System Overview</h2>
+<p>This system provides procedural obstacle and cover generation tailored for a fixed-arena, top-down tank shooter (inspired by <em>Brotato</em>).</p>
+<p>Instead of generating the floor layout from scratch, the system operates on the existing <strong>Tilemap (<code>Ground</code>)</strong> and boundaries (<code>Bounds.prefab</code>), procedurally populating the combat space with balanced, spaced, and varied obstacles each run.</p>
+<h3>Core Design Pillars</h3>
+<ol>
+  <li><strong>Guaranteed Tank Clearance</strong>: Grid-cell placement with enforced clearance buffers ensures corridors are always at least 2.5–3.0 units wide so tanks (~1.17 units wide) never get pinned or snagged.</li>
+  <li><strong>Anti-Clustering Variety</strong>: Local type-repulsion algorithms prevent duplicate obstacle types (e.g., three crates in a row) from spawning in the same immediate area.</li>
+  <li><strong>Mini-Formations &amp; Standalones</strong>: Procedural blending of standalone single props (isolated crates, barrels, trees) and coherent mini-formations (sandbag barricades, crate/barrel depots).</li>
+  <li><strong>Run Profiles</strong>: Pre-configurable generation profiles (e.g., <strong>Open Field</strong> vs. <strong>Tactical Battlefield</strong>) that can be selected per run or scaled per wave.</li>
+  <li><strong>Interactive &amp; Low-Cover Obstacles</strong>: Built-in support for explosive red barrels, toxic/slow green barrels, and shoot-through sandbags.</li>
+  <li><strong>Zero-Code Extensibility</strong>: Adding a new obstacle, barrel variant, or formation is 100% data-driven via ScriptableObjects.</li>
+</ol>
+<hr />
+<h2>2. Architecture &amp; Data Structures</h2>
+<pre><code class="language-">
+                 ┌──────────────────────────────────────┐
+                 │        ArenaObstacleGenerator        │
+                 │   (Extends AbstractMapGenerator)     │
+                 └──────────────────┬───────────────────┘
+                                    │
+           ┌────────────────────────┼────────────────────────┐
+           ▼                        ▼                        ▼
+┌──────────────────────┐ ┌──────────────────────┐ ┌──────────────────────┐
+│  ObstacleProfileSO   │ │ GridPlacementManager │ │ ObstacleCatalogSO    │
+│  - Profile Type      │ │ - Cell Occupancy     │ │ - ObstacleDefinition │
+│  - Target Density    │ │ - Clearance Buffer   │ │ - Formations         │
+│  - Formation Ratio   │ │ - Safe Zones Mask    │ │ - Weighting &amp; Rules  │
+└──────────────────────┘ └──────────────────────┘ └──────────────────────┘
+                                    │
+                   ┌────────────────┴────────────────┐
+                   ▼                                 ▼
+        ┌──────────────────────┐          ┌──────────────────────┐
+        │ Standalone Spawner   │          │  Formation Spawner   │
+        └──────────────────────┘          └──────────────────────┘
+</code></pre>
+<h3>2.1 ScriptableObjects</h3>
+<h4><code>ObstacleDefinitionSO</code></h4>
+<p>Defines an individual obstacle type and its spatial/behavioral rules:</p>
+<ul>
+  <li><code>string obstacleName</code>: Unique identifier (e.g. "Crate_Wood", "Red_Barrel", "Sandbag").</li>
+  <li><code>GameObject prefab</code>: Prefab to instantiate.</li>
+  <li><code>ObstacleCategory category</code>: Enum (<code>SolidCover</code>, <code>LowCover</code>, <code>ExplosiveHazard</code>, <code>ToxicHazard</code>).</li>
+  <li><code>Vector2Int footprintSize</code>: Cells occupied on the grid (e.g. $1 \times 1$, $1 \times 2$).</li>
+  <li><code>int clearanceBuffer</code>: Minimum required empty cells around this obstacle (default: 2 cells).</li>
+  <li><code>int typeRepulsionRadius</code>: Minimum cell distance allowed before another obstacle of the <em>same category/type</em> can be placed (prevents clumping).</li>
+  <li><code>float spawnWeight</code>: Relative spawn frequency in the generation pool.</li>
+</ul>
+<h4><code>FormationDefinitionSO</code></h4>
+<p>Defines multi-tile mini-formations:</p>
+<ul>
+  <li><code>string formationName</code>: (e.g. "Sandbag_L_Wall", "Crate_Barrel_Depot").</li>
+  <li><code>List&lt;FormationCell&gt; elements</code>:</li>
+  <li><code>Vector2Int relativeOffset</code>: Coordinate relative to formation root $(0,0)$.</li>
+  <li><code>ObstacleDefinitionSO obstacle</code>: Specific obstacle to place at that offset.</li>
+  <li><code>Vector2Int totalBoundingSize</code>: Enclosed area including required perimeter clearance.</li>
+  <li><code>float spawnWeight</code>: Chance to choose this formation.</li>
+</ul>
+<h4><code>ObstacleProfileSO</code></h4>
+<p>Configures the overall feel of a run:</p>
+<ul>
+  <li><code>string profileName</code>: (e.g. "Open Field", "Tactical Battlefield", "Heavy Ambush").</li>
+  <li><code>Vector2Int targetObstacleCount</code>: Minimum and maximum total obstacle nodes (e.g., [8, 14] for Open Field vs. [20, 26] for Tactical).</li>
+  <li><code>float formationChance</code>: Probability (0.0 to 1.0) that a placement node spawns a mini-formation instead of a single standalone object.</li>
+  <li><code>List&lt;ObstacleDefinitionSO&gt; allowedObstacles</code>: Whitelist of obstacles valid for this profile.</li>
+  <li><code>List&lt;FormationDefinitionSO&gt; allowedFormations</code>: Whitelist of formations valid for this profile.</li>
+</ul>
+<hr />
+<h2>3. Grid &amp; Placement Algorithm</h2>
+<h3>Step 1: Arena Grid Initialization</h3>
+<ol>
+  <li>Query the <code>Ground</code> Tilemap bounds (<code>cellBounds</code>) or use the configured <code>arenaSize</code> (e.g., $30 \times 15$).</li>
+  <li>Initialize a 2D occupancy grid: <code>CellState[width, height]</code>.</li>
+  <li>Mark unplayable borders: Apply an outer padding (2 cells inward from arena walls) as <code>Reserved_Border</code> so tanks can freely circle the perimeter.</li>
+  <li>Mark player spawn safe zone: Circle/box of 5 cells around player start point marked as <code>Reserved_SafeZone</code>.</li>
+  <li>Mark enemy spawner clearances: 3-cell radius around each <code>SpawnPoint</code> marked as <code>Reserved_SafeZone</code>.</li>
+</ol>
+<h3>Step 2: Candidate Node Selection</h3>
+<ol>
+  <li>Collect all candidate cells marked <code>Empty</code>.</li>
+  <li>Shuffle candidate list (Fisher-Yates) to ensure deterministic randomness based on seed.</li>
+  <li>For each candidate coordinate $(X, Y)$:</li>
+</ol>
+<ul>
+  <li>Check if cell $(X, Y)$ is free and has the required <code>clearanceBuffer</code> from any existing obstacle.</li>
+  <li>If clearance check passes, decide whether to place a <strong>Mini-Formation</strong> (based on <code>profile.formationChance</code>) or a <strong>Standalone Obstacle</strong>.</li>
+</ul>
+<h3>Step 3: Anti-Clustering Selection</h3>
+<ol>
+  <li>Evaluate all obstacles in the active pool.</li>
+  <li>Filter out any obstacle type whose <code>typeRepulsionRadius</code> overlaps an existing obstacle of the same type within that cell's neighborhood.</li>
+  <li>From the remaining valid candidates, select via weighted random roll.</li>
+  <li>Mark the occupied grid cells as <code>Occupied(ObstacleType)</code> and the surrounding buffer ring as <code>Reserved_Buffer</code>.</li>
+</ol>
+<hr />
+<h2>4. Interactive &amp; Low-Cover Obstacles</h2>
+<h3>4.1 Red Barrel (Explosive AOE)</h3>
+<ul>
+  <li><strong>Component</strong>: <code>ExplosiveBarrel : MonoBehaviour, IDamageable</code></li>
+  <li><strong>Trigger Conditions</strong>:</li>
+  <li><strong>Bullet Hit</strong>: Accumulates damage; on $HP \le 0$, detonates.</li>
+  <li><strong>Collision / Ramming</strong>: When hit by a tank (<code>OnCollisionEnter2D</code>), if tank velocity exceeds threshold, detonates immediately, dealing damage to both the tank and the surrounding radius.</li>
+  <li><strong>Explosion</strong>: Spawns <code>Explosion.prefab</code>, plays sound feedback, queries all 2D colliders in radius, and calls <code>TakeDamage()</code> on player and enemies alike.</li>
+</ul>
+<h3>4.2 Green Barrel (Toxic Sludge / Speed Penalty)</h3>
+<ul>
+  <li><strong>Component</strong>: <code>ToxicBarrel : MonoBehaviour, IDamageable</code></li>
+  <li><strong>Trigger Conditions</strong>:</li>
+  <li>On break / collision, shatters and deals contact damage.</li>
+  <li>Spawns a temporary <code>HazardPuddle</code> (<code>oilSpill</code> sprite) with a 2D trigger collider lasting $N$ seconds.</li>
+  <li><strong>Hazard Puddle Effect</strong>:</li>
+  <li>When a tank enters the trigger, applies <code>SlowModifier(0.5f)</code> to <code>TankMovement.cs</code> and deals minor periodic damage.</li>
+  <li>Cleans up automatically after duration expires.</li>
+</ul>
+<h3>4.3 Sandbags (Low Cover - Shoot-Through)</h3>
+<ul>
+  <li><strong>Status</strong>: <strong>Already Implemented &amp; Pre-Configured</strong> (Spawn-Only).</li>
+  <li><strong>Prefab &amp; Layer Configuration</strong>:</li>
+  <li>Existing prefab: <code>Assets/Prefab/Snad Bag.prefab</code>.</li>
+  <li>Layer assignment: Assigned to layer 9 (<code>ObstacleMovement</code>).</li>
+  <li>In <strong>Physics2D Collision Matrix</strong>:</li>
+  <li><code>ObstacleMovement</code> vs <code>Agent</code> / <code>Player</code> / <code>Enemy</code>: <strong>Enabled</strong> (Tanks cannot pass through sandbags).</li>
+  <li><code>ObstacleMovement</code> vs <code>Bullet</code>: <strong>Disabled</strong> (Bullets pass directly through sandbags).</li>
+  <li>Result: Provides tactical blocking against tank movement while permitting crossfire.</li>
+  <li><strong>Procedural Integration</strong>:</li>
+  <li>No new components or collision matrix adjustments are required.</li>
+  <li>Simply assign <code>Snad Bag.prefab</code> to an <code>ObstacleDefinitionSO</code> (category: <code>LowCover</code>) and reference it in standalone obstacle pools or <code>FormationDefinitionSO</code> (e.g., barricade lines/bunkers) to spawn it procedurally.</li>
+</ul>
+<hr />
+<h2>5. Phase-by-Phase Implementation Plan</h2>
+<table>
+  <thead><tr><th>Phase</th><th>Milestone</th><th>Deliverables</th></tr></thead><tbody>
+  <tr><td><strong>Phase 1</strong></td><td><strong>Data Architecture</strong></td><td>Create <code>ObstacleDefinitionSO</code>, <code>FormationDefinitionSO</code>, <code>ObstacleProfileSO</code>, and create initial asset definitions in <code>Assets/Data/PCG/</code>.</td></tr>
+  <tr><td><strong>Phase 2</strong></td><td><strong>Grid &amp; Clearance Logic</strong></td><td>Create <code>GridPlacementManager.cs</code> with cell occupancy, safe zone masking, buffer checks, and local type-repulsion.</td></tr>
+  <tr><td><strong>Phase 3</strong></td><td><strong>Generator Integration</strong></td><td>Create <code>ArenaObstacleGenerator.cs</code> (extending <code>AbstractMapGenerator</code>), hooking into <code>RandomMapGeneratorEditor</code> for 1-click generation and clearing in Editor.</td></tr>
+  <tr><td><strong>Phase 4</strong></td><td><strong>Interactive Mechanics</strong></td><td>Implement <code>ExplosiveBarrel.cs</code>, <code>ToxicBarrel.cs</code>, and <code>HazardPuddle.cs</code>. (Sandbag functionality and layering are already fully implemented via <code>ObstacleMovement</code> on <code>Snad Bag.prefab</code>; only needs <code>ObstacleDefinitionSO</code> asset to spawn).</td></tr>
+  <tr><td><strong>Phase 5</strong></td><td><strong>Polish &amp; Playtest</strong></td><td>Verify tank navigation clearance, tune Open Field vs. Tactical Battlefield profiles, and verify enemy AI navigation.</td></tr>
+</tbody></table>
+<hr />
+<h2>6. How to Add New Obstacles (Extensibility)</h2>
+<p>Because the system is data-driven, adding any future obstacle requires zero changes to the core generator:</p>
+<ol>
+  <li><strong>Create the Prefab</strong>: Drag any sprite into a prefab, attach a 2D collider (and optional <code>Damageable</code> / barrel script).</li>
+  <li><strong>Create the Definition</strong>: Right-click in Project view $\rightarrow$ <code>Create &gt; PCG &gt; Obstacle Definition</code>. Assign the prefab, footprint size, and repulsion radius.</li>
+  <li><strong>Add to Profile</strong>: Add the definition into any <code>ObstacleProfileSO</code> (e.g., Open Field or Tactical). The generator will automatically include it in the next run.</li>
+</ol>
+</body>
+</html>

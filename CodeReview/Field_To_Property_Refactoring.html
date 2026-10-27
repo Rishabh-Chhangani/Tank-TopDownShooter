@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field To Property Refactoring</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-code: #1f242c;
+    --border-color: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent-quote: #238636;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: #f0f6fc;
+    margin-top: 28px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  h1 { font-size: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h3 { font-size: 1.25rem; }
+  p { margin-bottom: 16px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    padding: 0.2em 0.4em;
+    background-color: var(--bg-code);
+    border-radius: 6px;
+    font-size: 85%;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  pre {
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow-x: auto;
+    line-height: 1.45;
+  }
+  pre code { background: none; padding: 0; }
+  ul, ol { padding-left: 2em; margin-bottom: 16px; }
+  li { margin-top: 0.35em; }
+  blockquote {
+    padding: 0 1em;
+    color: var(--text-secondary);
+    border-left: 4px solid var(--accent);
+    background-color: var(--bg-secondary);
+    border-radius: 0 4px 4px 0;
+    margin: 16px 0;
+  }
+  hr {
+    height: 1px;
+    background-color: var(--border-color);
+    border: none;
+    margin: 32px 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+  }
+  tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+</style>
+</head>
+<body>
+<h1>C# Field to Property Refactoring Report</h1>
+<h2>Overview</h2>
+<p>This document outlines the refactoring applied to C# fields across the project. Publicly exposed fields and internally critical variables were converted into encapsulated properties with appropriate access levels (<code>get</code> only, <code>get; private set;</code>, custom calculated getters, or validated setters).</p>
+<p>The primary objectives achieved:</p>
+<ol>
+  <li><strong>Encapsulation &amp; Safety:</strong> Prevent external classes from mutating internal state, bypassing game balance logic, or corrupting ScriptableObject asset instances at runtime.</li>
+  <li><strong>Unity Serialization Preservation:</strong> Using <code>[SerializeField] private &lt;type&gt; &lt;fieldName&gt;;</code> with matching backing field names ensures zero loss of serialized values in Unity prefabs and scene files.</li>
+  <li><strong>Derived / Calculated Values:</strong> Replacing duplicated formulas (e.g. normalized health ratio) with clean calculated read-only properties.</li>
+  <li><strong>Clean Code &amp; Idiomatic C#:</strong> Replacing Java-style getter methods with standard C# properties.</li>
+</ol>
+<hr />
+<h2>Refactored Classes and Changes</h2>
+<h3>1. <code>Damageable</code> (<code>Assets/Scripts/GamePlay/Damageable.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>public int maxHealth = 100;</code> to <code>[SerializeField] private int maxHealth = 100;</code> and exposed <code>public int MaxHealth =&gt; maxHealth;</code>.</li>
+  <li>Added calculated property <code>public float HealthNormalized =&gt; maxHealth &gt; 0 ? (float)currentHealth / maxHealth : 0f;</code>.</li>
+  <li>Added read-only status properties <code>public bool IsDead =&gt; isDead;</code> and <code>public bool IsAlive =&gt; !isDead;</code>.</li>
+  <li>Added <code>public GameObject EntityToDestroy { get; set; }</code> and implemented Actor-Root resolution in <code>Awake()</code> (detecting parent <code>PlayerController</code> or <code>DefaultEnemyAI</code>).</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Prevents external scripts from arbitrarily altering entity maximum health at runtime.</li>
+  <li>Encapsulates health percentage calculation in one canonical location, removing duplicate math in UI scripts (<code>HealthBarUIListener</code>) and preventing potential divide-by-zero errors.</li>
+  <li>Exposes entity state (<code>IsDead</code>, <code>IsAlive</code>) so AI and combat systems can inspect mortality without exposing the internal boolean.</li>
+  <li>Ensures that upon death, the entire actor (e.g. <code>Enemy</code> or <code>Player</code>) is destroyed cleanly including its health bar canvas and AI detector, without affecting the <code>"Enemies"</code> scene container folder.</li>
+</ul>
+<h3>2. <code>BulletData</code> (<code>Assets/Scripts/GamePlay/DataSO/BulletData.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>speed</code>, <code>damage</code>, and <code>maxDistance</code> from public fields to <code>[SerializeField] private</code> backing fields.</li>
+  <li>Added public read-only properties: <code>Speed</code>, <code>Damage</code>, <code>MaxDistance</code>.</li>
+  <li>Updated <code>Bullet.cs</code> callers to use capitalized properties.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li><code>ScriptableObject</code> assets represent shared template data. Public fields allow any runtime script to accidentally alter the ScriptableObject values in memory (and even persist modifications back to the asset database in the editor). Making them read-only properties guarantees asset immutability.</li>
+</ul>
+<h3>3. <code>TankMovementData</code> (<code>Assets/Scripts/GamePlay/DataSO/TankMovementData.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>rotationSpeed</code>, <code>maxSpeed</code>, <code>acceleration</code>, <code>deceleration</code> to <code>[SerializeField] private</code> fields.</li>
+  <li>Added public read-only properties: <code>RotationSpeed</code>, <code>MaxSpeed</code>, <code>Acceleration</code>, <code>Deceleration</code>.</li>
+  <li>Updated <code>TankMovement.cs</code> references to use the properties.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Protects vehicle dynamics parameters from unexpected runtime mutations. Preserves asset configuration in <code>.asset</code> files.</li>
+</ul>
+<h3>4. <code>TurretData</code> (<code>Assets/Scripts/GamePlay/DataSO/TurretData.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>bulletPrefab</code>, <code>reloadDelay</code>, and <code>bulletData</code> to <code>[SerializeField] private</code> fields.</li>
+  <li>Added public read-only properties: <code>BulletPrefab</code>, <code>ReloadDelay</code>, <code>BulletData</code>.</li>
+  <li>Updated <code>WeaponTurret.cs</code> callers to use <code>turretData.BulletPrefab</code> and <code>turretData.ReloadDelay</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Encapsulates weapon data templates against unauthorized runtime reassignment.</li>
+</ul>
+<h3>5. <code>SimpleRandomWalkSO</code> (<code>Assets/Scripts/GamePlay/_Scripts/Data/SimpleRandomWalkSO.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>iteration</code>, <code>walkLength</code>, <code>startRandomlyEachIteration</code> to <code>[SerializeField] private</code> fields.</li>
+  <li>Added public read-only properties: <code>Iteration</code>, <code>WalkLength</code>, <code>StartRandomlyEachIteration</code>.</li>
+  <li>Updated <code>SimpleRandomMapGenerator.cs</code> to access properties.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Protects procedural generation algorithms from having map generation parameters altered mid-run.</li>
+</ul>
+<h3>6. <code>TankMovement</code> (<code>Assets/Scripts/GamePlay/Tank/TankMovement.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>public float currentSpeed = 0;</code> to <code>[SerializeField] private float currentSpeed = 0f;</code> and exposed <code>public float CurrentSpeed =&gt; currentSpeed;</code>.</li>
+  <li>Converted <code>public float currentDriveDirection = 1;</code> to <code>private float currentDriveDirection = 1f;</code> and exposed <code>public float CurrentDriveDirection =&gt; currentDriveDirection;</code>.</li>
+  <li>Converted <code>public TankMovementData movementData;</code> to <code>[SerializeField] private TankMovementData movementData;</code> and exposed property <code>MovementData { get; set; }</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li><code>currentSpeed</code> and <code>currentDriveDirection</code> are internal physics variables governed by fixed-update acceleration, deceleration, and bounds clamping. Exposing them as public mutable fields allowed external code to bypass all physics rules. Restricting mutation to <code>TankMovement</code> while providing read-only getters allows UI/audio to observe speed safely.</li>
+</ul>
+<h3>7. <code>TankController</code> (<code>Assets/Scripts/GamePlay/Tank/TankController.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>tankMovement</code>, <code>aimTurret</code>, and <code>weapon</code> to <code>[SerializeField] private</code> fields.</li>
+  <li>Exposed properties: <code>TankMovement</code>, <code>AimTurret</code>, <code>IReadOnlyList&lt;WeaponTurret&gt; Weapon</code>.</li>
+  <li>Updated <code>AIChaseBehaviour</code>, <code>AIPatrolPathBehaviour</code>, <code>AIShootBehaviour</code>, and <code>AIStaticPatrolBehaviour</code> to use <code>TankMovement</code> and <code>AimTurret</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>AI scripts need to read references to child subsystems (like aim turret or movement) for coordinate tracking. They should never be able to overwrite or null those references on another tank.</li>
+</ul>
+<h3>8. <code>WeaponTurret</code> (<code>Assets/Scripts/GamePlay/Tank/WeaponTurret.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>turretBarrels</code> to <code>[SerializeField] private List&lt;Transform&gt; turretBarrels;</code> with <code>public IReadOnlyList&lt;Transform&gt; TurretBarrels =&gt; turretBarrels;</code>.</li>
+  <li>Converted <code>turretData</code> to <code>[SerializeField] private TurretData turretData;</code> with <code>public TurretData TurretData { get; set; }</code>.</li>
+  <li>Exposed state properties: <code>public bool CanShoot =&gt; canShoot;</code> and <code>public float CurrentReloadDelay =&gt; currentDelay;</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Protects turret barrel collection from external list modification (<code>.Clear()</code>, <code>.Add()</code>). Exposes weapon readiness for AI/HUD decision making.</li>
+</ul>
+<h3>9. <code>Bullet</code> (<code>Assets/Scripts/GamePlay/Bullet.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>public BulletData bulletData;</code> to <code>[SerializeField] private BulletData bulletData;</code> with <code>public BulletData BulletData { get; set; }</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Keeps Inspector/prefab serialization intact while providing controlled property access for weapon spawners.</li>
+</ul>
+<h3>10. <code>SpawnManager</code> (<code>Assets/Scripts/GamePlay/SpawnManager.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Added read-only properties: <code>TimeBetweenSpawn</code>, <code>NumberOfEnemiesToSpawn</code>, <code>EnemySpawner</code>.</li>
+  <li>Converted Java-style <code>GetNumberOfEnemiesToSpawn()</code> into an expression-bodied wrapper pointing to <code>NumberOfEnemiesToSpawn</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Replaces boilerplate getter method with idiomatic C# property while preserving backward compatibility.</li>
+</ul>
+<h3>11. <code>WaveManager</code> (<code>Assets/Scripts/GamePlay/WaveManager.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Added read-only properties: <code>CurrentWave</code>, <code>MaxNumberOfWaves</code>, <code>EnemiesAlive</code>, <code>TimeBetweenWaves</code>.</li>
+  <li>Updated spawn count retrieval to use <code>spawnManager.NumberOfEnemiesToSpawn</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Allows UI HUD and level managers to query the wave progression and enemies remaining without exposing internal counters to tampering.</li>
+</ul>
+<h3>12. <code>PatrolPath</code> (<code>Assets/Scripts/GamePlay/AI/PatrolPath.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>public List&lt;Transform&gt; patrolPoints;</code> to <code>[SerializeField] private List&lt;Transform&gt; patrolPoints;</code> with <code>public IReadOnlyList&lt;Transform&gt; PatrolPoints =&gt; patrolPoints;</code>.</li>
+  <li>Converted gizmo visual fields (<code>pointsColor</code>, <code>pointSize</code>, <code>lineColor</code>) to serialized private fields with public getter properties.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Prevents external scripts from clearing or corrupting waypoint lists while maintaining full Inspector setup capabilities.</li>
+</ul>
+<h3>13. <code>AIShootBehaviour</code> (<code>Assets/Scripts/GamePlay/AI/AIShootBehaviour.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>public float fieldOfVisionForShooting = 60f;</code> to <code>[Range(1f, 180f)] [SerializeField] private float fieldOfVisionForShooting = 60f;</code> with <code>public float FieldOfVisionForShooting =&gt; fieldOfVisionForShooting;</code>.</li>
+  <li>Exposed <code>public float ShootCooldown =&gt; shootCooldown;</code> and <code>public float CurrentShootCooldown =&gt; currentShootCooldown;</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Prevents runtime alteration of AI vision angles while allowing diagnostic reading.</li>
+</ul>
+<h3>14. <code>TrackMarkSpawner</code> (<code>Assets/Scripts/Presentation/TrackMarkSpawner.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>trackDistance</code>, <code>trackMarkPrefab</code>, <code>objectPoolSize</code> to <code>[SerializeField] private</code> fields with read-only properties: <code>TrackDistance</code>, <code>TrackMarkPrefab</code>, <code>ObjectPoolSize</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Encapsulates visual feedback spawn tuning.</li>
+</ul>
+<h3>15. <code>ObjectGeneratorRandomPositionUtil</code> (<code>Assets/Scripts/Presentation/ObjectGeneratorRandomPositionUtil.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>objectPrefab</code> and <code>radius</code> to <code>[SerializeField] private</code> fields with read-only properties: <code>ObjectPrefab</code>, <code>Radius</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Encapsulates impact feedback parameters.</li>
+</ul>
+<h3>16. <code>InstantiateUtil</code> (<code>Assets/Scripts/Presentation/InstantiateUtil.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>objectToInstantiate</code> to <code>[SerializeField] private</code> with <code>public GameObject ObjectToInstantiate { get; set; }</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Controlled property access for dynamically configured spawn prefabs.</li>
+</ul>
+<h3>17. <code>UIFollowTank</code> (<code>Assets/Scripts/Presentation/UIFollowTank.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>objectToFollow</code> to <code>[SerializeField] private</code> with <code>public Transform ObjectToFollow { get; set; }</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Allows UI components to rebind targets dynamically through a property.</li>
+</ul>
+<h3>18. <code>EngineAudio</code> (<code>Assets/Scripts/Presentation/EngineAudio.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>minVolume</code>, <code>maxVolume</code>, <code>volumeIncrease</code> to <code>[SerializeField] private</code> with read-only properties <code>MinVolume</code>, <code>MaxVolume</code>, <code>VolumeIncrease</code>, and <code>CurrentVolume</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Prevents external code from modifying engine volume boundaries; exposes telemetry.</li>
+</ul>
+<h3>19. <code>ObjectPool</code> (<code>Assets/Scripts/GamePlay/ObjectPool.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted <code>spawnedObjectsParent</code> and <code>alwaysDestroy</code> to <code>[SerializeField] private</code> with properties <code>SpawnedObjectsParent</code> and <code>AlwaysDestroy</code>.</li>
+  <li>Added read-only properties <code>ObjectToPool</code>, <code>PoolSize</code>, and <code>ActivePoolCount</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Protects container hierarchy references and exposes capacity/active count telemetry.</li>
+</ul>
+<h3>20. <code>SaveSystem</code> &amp; <code>LoadedData</code> (<code>Assets/Scripts/GamePlay/SaveSystem.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Converted PlayerPrefs key fields (<code>playerHealthKey</code>, <code>sceneKey</code>, <code>savePresentKey</code>) to <code>[SerializeField] private</code> with read-only properties.</li>
+  <li>In <code>LoadedData</code>, replaced fields with auto-properties <code>PlayerHealth { get; set; }</code> and <code>SceneIndex { get; set; }</code> (with backward-compatible lowercase aliases).</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Prevents accidental overwrite of PlayerPrefs dictionary keys while modernizing data model classes.</li>
+</ul>
+<h3>21. <code>GameManager</code> (<code>Assets/Scripts/GamePlay/GameManager.cs</code>)</h3>
+<ul>
+  <li><strong>Changes:</strong></li>
+  <li>Exposed read-only properties <code>Player =&gt; player;</code> and <code>SaveSystem =&gt; saveSystem;</code>.</li>
+  <li>Updated references to use <code>LoadedData.PlayerHealth</code> and <code>LoadedData.SceneIndex</code>.</li>
+  <li><strong>Problem Solved &amp; Why:</strong></li>
+  <li>Provides global access to the instantiated player and save system singletons safely.</li>
+</ul>
+<hr />
+<h2>Verification</h2>
+<ul>
+  <li>Executed full compilation across all project assemblies: <code>Gameplay.csproj</code>, <code>Presentation.csproj</code>, and <code>Assembly-CSharp-Editor.csproj</code>.</li>
+  <li><strong>Status</strong>: <code>Build succeeded. 0 Warning(s), 0 Error(s)</code>.</li>
+</ul>
+</body>
+</html>

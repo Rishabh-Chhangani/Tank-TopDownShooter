@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProceduralGeneratorInstructions</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-code: #1f242c;
+    --border-color: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent-quote: #238636;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: #f0f6fc;
+    margin-top: 28px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  h1 { font-size: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h3 { font-size: 1.25rem; }
+  p { margin-bottom: 16px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    padding: 0.2em 0.4em;
+    background-color: var(--bg-code);
+    border-radius: 6px;
+    font-size: 85%;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  pre {
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow-x: auto;
+    line-height: 1.45;
+  }
+  pre code { background: none; padding: 0; }
+  ul, ol { padding-left: 2em; margin-bottom: 16px; }
+  li { margin-top: 0.35em; }
+  blockquote {
+    padding: 0 1em;
+    color: var(--text-secondary);
+    border-left: 4px solid var(--accent);
+    background-color: var(--bg-secondary);
+    border-radius: 0 4px 4px 0;
+    margin: 16px 0;
+  }
+  hr {
+    height: 1px;
+    background-color: var(--border-color);
+    border: none;
+    margin: 32px 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+  }
+  tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+</style>
+</head>
+<body>
+<h1>Procedural Map Generator Instructions</h1>
+<p>The project contains a modular procedural generation system under the <code>Assets/Scripts/GamePlay/_Scripts</code> and <code>Assets/Editor</code> folders.</p>
+<h2>System Architecture</h2>
+<p>The Procedural Generator logic relies on 4 main components:</p>
+<ol>
+  <li><strong><code>AbstractMapGenerator</code></strong>: The base abstract class acting as the skeleton for generating maps. It clears the tilemap and triggers procedural algorithms.</li>
+  <li><strong><code>SimpleRandomMapGenerator</code></strong>: The implementation of the abstract class. It relies on a "Random Walk" algorithm provided by the helper class <code>ProceduralGenerationAlgorithms.cs</code> to generate the level paths.</li>
+  <li><strong><code>TileMapVisualizer</code></strong>: Responsible for actually drawing the generated floors. It acts as the bridge between raw map data (<code>HashSet&lt;Vector2Int&gt;</code>) and Unity's Tilemap system.</li>
+  <li><strong><code>SimpleRandomWalkSO</code> (ScriptableObject Data)</strong>: Stores the configuration for the map (iterations, walk length, starting randomly).</li>
+</ol>
+<h2>How to Setup and Use it in the Game</h2>
+<ol>
+  <li><strong>Scene Setup:</strong></li>
+</ol>
+<ul>
+  <li>Create an empty <code>GameObject</code> in your Scene and name it <code>MapGenerator</code>.</li>
+  <li>Add the <code>SimpleRandomMapGenerator</code> script to this GameObject.</li>
+  <li>Add the <code>TileMapVisualizer</code> script to the same GameObject.</li>
+</ul>
+<ol>
+  <li><strong>Tilemap Setup:</strong></li>
+</ol>
+<ul>
+  <li>Right-click the Unity Hierarchy: <strong>2D Object &gt; Tilemap &gt; Rectangular</strong>. This creates a Grid with a Tilemap.</li>
+  <li>Drag your new <code>Tilemap</code> into the <strong>Floor Tile Map</strong> field on the <code>TileMapVisualizer</code> component.</li>
+  <li>Assign your chosen floor <code>TileBase</code> object (e.g. your floor sprite tile asset) to the <strong>Floor Tile</strong> field.</li>
+  <li>Drag the <code>TileMapVisualizer</code> component into the <code>tileMapVisualizer</code> field of the <code>SimpleRandomMapGenerator</code>.</li>
+</ul>
+<ol>
+  <li><strong>Data Configuration (Scriptable Object):</strong></li>
+</ol>
+<ul>
+  <li>Go into the Project view.</li>
+  <li>Right-click -&gt; <strong>Create &gt; PCG &gt; SimpleRandomWalkData</strong>.</li>
+  <li>Select the newly created data file and adjust its parameters in the Inspector (e.g., <code>iteration = 10</code>, <code>walkLength = 10</code>).</li>
+  <li>Drag this Scriptable Object into the <strong>SimpleRandomWalkSO</strong> field of the <code>SimpleRandomMapGenerator</code>.</li>
+</ul>
+<ol>
+  <li><strong>Generating the Map:</strong></li>
+</ol>
+<ul>
+  <li>Because of the custom editor script (<code>RandomMapGeneratorEditor.cs</code>), you can test the generator without hitting Play.</li>
+  <li>Select your <code>MapGenerator</code> GameObject.</li>
+  <li>In the Inspector, look at the <code>SimpleRandomMapGenerator</code> component.</li>
+  <li>Click the custom <strong>"Generate Map"</strong> button. The floor tiles will be painted onto your Tilemap instantly.</li>
+</ul>
+<p><em>Note: Due to typo naming in the scripts, be aware that it's typed as <code>AbstractMapGenerator</code> and <code>SimpleRandomMapGenerator</code> missing the 'e' in Generator.</em></p>
+</body>
+</html>

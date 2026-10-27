@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 1 HUD Polish</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-code: #1f242c;
+    --border-color: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent-quote: #238636;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: #f0f6fc;
+    margin-top: 28px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  h1 { font-size: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h3 { font-size: 1.25rem; }
+  p { margin-bottom: 16px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    padding: 0.2em 0.4em;
+    background-color: var(--bg-code);
+    border-radius: 6px;
+    font-size: 85%;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  pre {
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow-x: auto;
+    line-height: 1.45;
+  }
+  pre code { background: none; padding: 0; }
+  ul, ol { padding-left: 2em; margin-bottom: 16px; }
+  li { margin-top: 0.35em; }
+  blockquote {
+    padding: 0 1em;
+    color: var(--text-secondary);
+    border-left: 4px solid var(--accent);
+    background-color: var(--bg-secondary);
+    border-radius: 0 4px 4px 0;
+    margin: 16px 0;
+  }
+  hr {
+    height: 1px;
+    background-color: var(--border-color);
+    border: none;
+    margin: 32px 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+  }
+  tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+</style>
+</head>
+<body>
+<h1>Phase 1: In-Game HUD Polish</h1>
+<h2>Objective</h2>
+<p>Upgrade the functional UI into a polished, readable, and responsive HUD during combat.</p>
+<h2>Key Tasks</h2>
+<ol>
+  <li><strong>Health &amp; Ammo Refinement:</strong></li>
+</ol>
+<ul>
+  <li>Improve the styling of the health slider (e.g., color changing from green to red based on percentage).</li>
+  <li>Polish the reload UI (e.g., making it snap to the tank visually or stylize the slider).</li>
+</ul>
+<ol>
+  <li><strong>Wave Indicators:</strong></li>
+</ol>
+<ul>
+  <li>Add a top-screen banner indicating the Current Wave number.</li>
+  <li>Add a progress bar or text element showing "Enemies Remaining" that updates via the <code>WaveManager</code>.</li>
+</ul>
+<ol>
+  <li><strong>Resource Counters:</strong></li>
+</ol>
+<ul>
+  <li>Display the player's current currency/XP in a clean corner widget.</li>
+</ul>
+</body>
+</html>

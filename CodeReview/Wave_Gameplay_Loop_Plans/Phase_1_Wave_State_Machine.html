@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 1 Wave State Machine</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-code: #1f242c;
+    --border-color: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent-quote: #238636;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: #f0f6fc;
+    margin-top: 28px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  h1 { font-size: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h3 { font-size: 1.25rem; }
+  p { margin-bottom: 16px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    padding: 0.2em 0.4em;
+    background-color: var(--bg-code);
+    border-radius: 6px;
+    font-size: 85%;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  pre {
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow-x: auto;
+    line-height: 1.45;
+  }
+  pre code { background: none; padding: 0; }
+  ul, ol { padding-left: 2em; margin-bottom: 16px; }
+  li { margin-top: 0.35em; }
+  blockquote {
+    padding: 0 1em;
+    color: var(--text-secondary);
+    border-left: 4px solid var(--accent);
+    background-color: var(--bg-secondary);
+    border-radius: 0 4px 4px 0;
+    margin: 16px 0;
+  }
+  hr {
+    height: 1px;
+    background-color: var(--border-color);
+    border: none;
+    margin: 32px 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+  }
+  tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+</style>
+</head>
+<body>
+<h1>Phase 1: Wave State Machine</h1>
+<h2>Objective</h2>
+<p>Structure the gameplay loop into distinct, manageable states (Pre-wave, Active Wave, Intermission, Run Over).</p>
+<h2>Key Tasks</h2>
+<ol>
+  <li><strong>GameManager Refactor:</strong></li>
+</ol>
+<ul>
+  <li>Create a State Machine in <code>GameManager</code> (or <code>WaveManager</code>) with states: <code>MainMenu</code>, <code>WaveStarting</code>, <code>WaveActive</code>, <code>ShopPhase</code>, <code>GameOver</code>.</li>
+</ul>
+<ol>
+  <li><strong>State Transitions:</strong></li>
+</ol>
+<ul>
+  <li><strong>WaveStarting:</strong> Show a UI banner ("Wave 1") and countdown. Disable player shooting/movement.</li>
+  <li><strong>WaveActive:</strong> Enable combat, start the <code>EnemySpawner</code>, track active enemies.</li>
+  <li><strong>ShopPhase:</strong> Triggered when <code>WaveManager</code> reports 0 enemies remaining. Pauses combat, opens Upgrade UI.</li>
+</ul>
+</body>
+</html>

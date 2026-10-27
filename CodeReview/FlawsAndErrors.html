@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlawsAndErrors</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-code: #1f242c;
+    --border-color: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent-quote: #238636;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: #f0f6fc;
+    margin-top: 28px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  h1 { font-size: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h3 { font-size: 1.25rem; }
+  p { margin-bottom: 16px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    padding: 0.2em 0.4em;
+    background-color: var(--bg-code);
+    border-radius: 6px;
+    font-size: 85%;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  pre {
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow-x: auto;
+    line-height: 1.45;
+  }
+  pre code { background: none; padding: 0; }
+  ul, ol { padding-left: 2em; margin-bottom: 16px; }
+  li { margin-top: 0.35em; }
+  blockquote {
+    padding: 0 1em;
+    color: var(--text-secondary);
+    border-left: 4px solid var(--accent);
+    background-color: var(--bg-secondary);
+    border-radius: 0 4px 4px 0;
+    margin: 16px 0;
+  }
+  hr {
+    height: 1px;
+    background-color: var(--border-color);
+    border: none;
+    margin: 32px 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+  }
+  tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+</style>
+</head>
+<body>
+<h1>Codebase Review: Flaws, Errors, and Bad Practices</h1>
+<p>Here is an analysis of the game's scripts focusing on flaws, errors, performance issues, and general bad practices.</p>
+<h2>1. Performance and Garbage Collection Issues</h2>
+<ul>
+  <li><strong>Expensive Operations in Update Loops:</strong></li>
+  <li><code>Bullet.cs</code>: Computes <code>Vector2.Distance(transform.position, startPosition)</code> in the <code>Update</code> method. Calculating distance involves a square root operation which is expensive when there are many bullets in the scene. <strong>Fix:</strong> Use <code>.sqrMagnitude</code> or an object lifespan timer instead.</li>
+  <li><code>PatrolPath.cs</code>: The <code>GetClosestPathPoint</code> method calculates distance in a loop. <strong>Fix:</strong> Use <code>sqrMagnitude</code> to compare distances without taking square roots.</li>
+  <li><strong>Costly Search Functions:</strong></li>
+  <li><code>EnemySpawner.cs</code>: Uses <code>FindObjectsOfType&lt;SpawnPoint&gt;()</code> in <code>Awake</code> and <code>GameObject.Find("Enemies")</code> in <code>Start</code>. <code>GameObject.Find</code> relies on string matching which is extremely slow and prone to breaking if the object is renamed.</li>
+  <li><code>GameManager.cs</code>: Calls <code>FindAnyObjectByType&lt;PlayerInputHandler&gt;()</code> and <code>FindObjectOfType&lt;SaveSystem&gt;()</code> every time a scene is loaded. <strong>Fix:</strong> Use dependency injection, Serialized references, or Singletons.</li>
+  <li><strong>Garbage Allocation:</strong></li>
+  <li><code>AIDetector.cs</code>: <code>Physics2D.OverlapCircle</code> in <code>CheckIfPlayerInRange</code> generates garbage (memory allocation) every tick. <strong>Fix:</strong> Use <code>Physics2D.OverlapCircleNonAlloc</code> with a pre-allocated array.</li>
+  <li><strong>Coroutines vs Overloads:</strong></li>
+  <li><code>DestroyOnAudioFinished.cs</code>: Uses a coroutine to wait and destroy an object. <strong>Fix:</strong> Simply use <code>Destroy(gameObject, audioSource.clip.length);</code>.</li>
+</ul>
+<h2>2. Architecture and Design Issues</h2>
+<ul>
+  <li><strong>Object Pooling Antipatterns:</strong></li>
+  <li><code>ObjectPool.cs</code>: It contains an <code>alwaysDestroy</code> boolean and custom logic interacting with <code>DestroyIfDisabled</code> inside <code>OnDestroy</code>. A pool should strictly handle recycling and not take responsibility for manually cleaning up scenes by deleting active objects.</li>
+  <li><strong>Global Namespace Pollution:</strong></li>
+  <li>Almost all scripts lack a <code>namespace</code> declaration. This makes it difficult to manage larger codebases and avoids clashes with 3rd-party assets.</li>
+  <li><strong>Data Storage limitations:</strong></li>
+  <li><code>SaveSystem.cs</code>: Serializes game data natively into <code>PlayerPrefs</code>. This is very bad practice for real games since it is easily tampered with, insecure, and meant only for small user preferences (like sound settings).</li>
+</ul>
+<h2>3. Errors and Typographical Mistakes</h2>
+<ul>
+  <li><strong>Spelling Mistakes (Class names and Variables):</strong></li>
+  <li><code>Damageable</code> -&gt; <code>Damageable</code></li>
+  <li><code>InstantiateUtil</code> -&gt; <code>InstantiateUtil</code></li>
+  <li><code>MuzzleFlash</code> -&gt; <code>MuzzleFlash</code></li>
+  <li><code>Listener</code> (e.g. <code>HealthBarUIListener</code>) -&gt; <code>Listener</code></li>
+  <li><code>SimpleRandomWalkSO</code> -&gt; <code>SimpleRandomWalkSO</code></li>
+  <li><code>AbstractMapGenerator</code> -&gt; <code>AbstractMapGenerator</code></li>
+  <li><code>CreateObjectParentIfNeeded()</code> in ObjectPool.cs -&gt; <code>CreateObjectParentIfNeeded()</code></li>
+</ul>
+<h2>4. Null References &amp; Missing Protections</h2>
+<ul>
+  <li><code>PatrolPath.cs</code>: In <code>OnDrawGizmos</code>, the loop logic assumes <code>patrolPoints</code> elements are not null. But when items are deleted in the editor, this throws NullReference exceptions.</li>
+  <li>Event Subscription Leaks: In scripts like <code>GameManager.cs</code>, it subscribes to <code>SceneManager.sceneLoaded</code> but never unsubscribes on destroy. Although it uses <code>DontDestroyOnLoad</code>, if another instance is ever generated, it can leak.</li>
+</ul>
+</body>
+</html>

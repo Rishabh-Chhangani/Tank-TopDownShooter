@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 2 Obstacles And Validation</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-code: #1f242c;
+    --border-color: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent-quote: #238636;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: #f0f6fc;
+    margin-top: 28px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  h1 { font-size: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+  h3 { font-size: 1.25rem; }
+  p { margin-bottom: 16px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    padding: 0.2em 0.4em;
+    background-color: var(--bg-code);
+    border-radius: 6px;
+    font-size: 85%;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  pre {
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow-x: auto;
+    line-height: 1.45;
+  }
+  pre code { background: none; padding: 0; }
+  ul, ol { padding-left: 2em; margin-bottom: 16px; }
+  li { margin-top: 0.35em; }
+  blockquote {
+    padding: 0 1em;
+    color: var(--text-secondary);
+    border-left: 4px solid var(--accent);
+    background-color: var(--bg-secondary);
+    border-radius: 0 4px 4px 0;
+    margin: 16px 0;
+  }
+  hr {
+    height: 1px;
+    background-color: var(--border-color);
+    border: none;
+    margin: 32px 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    text-align: left;
+  }
+  th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+  }
+  tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+</style>
+</head>
+<body>
+<h1>Phase 2: Obstacle Placement &amp; Validation</h1>
+<h2>Objective</h2>
+<p>Populate the blocked areas generated in Phase 1 with actual game obstacles (rocks, walls, crates) while ensuring the map remains fully playable and tank-navigable.</p>
+<h2>Key Tasks</h2>
+<ol>
+  <li><strong>Obstacle Spawning System</strong></li>
+</ol>
+<ul>
+  <li>Create an <code>ObstacleSpawner</code> that reads the non-floor tiles from Phase 1.</li>
+  <li>Spawn corresponding obstacle prefabs (rocks, crates, walls) based on a weighted chance to add visual variety.</li>
+  <li>Ensure obstacle density remains balanced so that players and enemies always have room to aim and maneuver.</li>
+</ul>
+<ol>
+  <li><strong>Tank Clearance Validation</strong></li>
+</ol>
+<ul>
+  <li>Since tanks require a wider turning radius and space, implement a check (e.g., expanding the obstacle footprint by 1 tile) to guarantee that choke points are physically wide enough for the player and enemy tanks to pass through.</li>
+</ul>
+<ol>
+  <li><strong>Trapped Area Prevention (Flood Fill)</strong></li>
+</ol>
+<ul>
+  <li>Implement a Flood Fill (or A*) algorithm starting from the Player Spawn Zone.</li>
+  <li>Check if every walkable floor tile is reachable from the spawn.</li>
+  <li>If any "isolated islands" of floor exist, either fill them with obstacles or carve a path through the blocking walls to connect them to the main arena.</li>
+</ul>
+</body>
+</html>

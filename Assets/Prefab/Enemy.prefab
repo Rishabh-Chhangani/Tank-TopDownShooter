@@ -217,7 +217,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   viewRadius: 6
   detectionCheckDelay: 0.1
-  target: {fileID: 2435063207400556624, guid: 8e4b16b723df7d3499a271cde60ad248, type: 3}
   playerLayerMask:
     serializedVersion: 2
     m_Bits: 1024
@@ -562,6 +561,14 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: dd0f085e57eddc941b3384dc36ae0859, type: 3}
+    - target: {fileID: 512710339736016808, guid: f5e335a2010c1be4d800e437f249279e, type: 3}
+      propertyPath: m_SortingLayer
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 512710339736016808, guid: f5e335a2010c1be4d800e437f249279e, type: 3}
+      propertyPath: m_SortingLayerID
+      value: 78324543
+      objectReference: {fileID: 0}
     - target: {fileID: 512710339736016810, guid: f5e335a2010c1be4d800e437f249279e, type: 3}
       propertyPath: m_Interpolate
       value: 1
